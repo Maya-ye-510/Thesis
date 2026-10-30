@@ -5,6 +5,6 @@
   "description": "Responsive I SEE visual-perception experience, based on Maya Ye's Figma design.",
   "scripts": {
     "test": "node --test tests/*.test.cjs",
-    "check": "node --check app.js && node --check particle-field.js && node --check field-math.js"
+    "check": "node --check app.js && node --check control-artwork.js && node --check particle-field.js && node --check field-math.js"
   }
 }

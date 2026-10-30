@@ -36,7 +36,16 @@ The site respects the system's reduced-motion setting, pauses rendering in hidde
 
 ## Design and optical effects
 
-The original composition now uses fluid regions and a two-column condition selector on mobile rather than a scaled fixed-size screenshot. The eye artwork remains an original SVG composition. The video reference informs the shared logo/eye transition, the start button's moving coloured bars, and the crossfading hover/selected control states. Browsers without the View Transition API use a simple fade.
+Each screen fits the available viewport height, including the introduction's full text and start button. The eye composition is fitted against both available width and height; its diagonal lines extend to the screen edges. The condition selector uses two columns on mobile. Typography and spacing adapt to shorter screens without requiring page scrolling.
+
+Motion preserves the original Figma vectors and the supplied video reference:
+
+- **Home → introduction:** 700 ms, ease-in-out. The logo moves, the small eye grows into the large eye, and the background rings and diagonal cross appear with a rotating reveal.
+- **Hover / keyboard focus:** 450 ms, ease-in-out. Matched SVG parts move and resize between the original variants, including the condition selector and final-page controls. Texture differences crossfade during the same motion.
+- **Click / selection / other page changes:** 300 ms, ease-in.
+- **I SEE logo → home:** 500 ms dissolve, with no shared-element movement.
+
+Browsers without the View Transition API use a page fade and the introduction's background reveal. System reduced-motion preferences disable transitions and vector interpolation. No animation library is required.
 
 The field uses Canvas 2D with cached shape sprites, perspective projection, and layers of coloured discs, rings, geometric outlines, and lines. It has no third-party JavaScript runtime dependencies.
 
@@ -53,6 +62,7 @@ Condition selections stay in memory for the current page session. They are not s
 - `index.html` — page structure and original content.
 - `style.css` — responsive layouts, fonts, and control/page motion.
 - `app.js` — navigation, conditions, original control states, and eye tracking.
+- `control-artwork.js` — original SVG variants with stable vector keys for geometry interpolation.
 - `particle-field.js` — interactive canvas field and its rendering lifecycle.
 - `field-math.js` — condition selection, projection, focus, and colour math.
 - `assets/` — original exported SVGs, fonts, and font licences.

@@ -30,15 +30,18 @@ $('#experience').append(experienceFooter); experienceFooter.append($('.eye-contr
 $('#experience img[data-node-id="252:175"]').classList.add('experience-old-rule');
 
 function sizeArtwork() {
+  $$('.condition-art').forEach(art => {
+    art.firstElementChild.style.transform = `scale(${art.clientWidth / 188})`;
+  });
   const container = $('.intro-graphic');
-  if (!container.getBoundingClientRect().width) return;
-  const width = container.clientWidth;
-  const scale = width / 1128;
-  $('.eye-artboard').style.transform = `scale(${scale})`;
-  if (innerWidth > 700) container.style.minHeight = Math.max(560, 907 * scale - 40) + 'px';
-  else container.style.minHeight = '';
+  if (!container.clientWidth || !container.clientHeight) return;
+  const scale = Math.min(container.clientWidth / 1128, container.clientHeight / 907);
+  const x = (container.clientWidth - 1128 * scale) / 2;
+  const y = (container.clientHeight - 907 * scale) / 2;
+  $('.eye-artboard').style.transform = `translate(${x}px,${y}px) scale(${scale})`;
 }
 new ResizeObserver(sizeArtwork).observe($('.intro-graphic'));
+new ResizeObserver(sizeArtwork).observe($('#condition-options'));
 addEventListener('resize', sizeArtwork);
 const field = new ParticleField($('#particle-canvas'), value => { $('#focus-depth').value = Math.round(value * 100); });
 
@@ -50,6 +53,7 @@ function updateScreen(name, replace) {
   else if (location.hash !== '#' + name) history.pushState({ screen: name }, '', '#' + name);
   field.setActive(name === 'experience');
   if (name === 'experience') updateConditions();
+  sizeArtwork();
   resetEyes();
   window.scrollTo({ top: 0, behavior: 'instant' });
   requestAnimationFrame(() => {
@@ -57,13 +61,19 @@ function updateScreen(name, replace) {
     const el = $('#' + name); el.setAttribute('tabindex', '-1'); el.focus({ preventScroll: true });
   });
 }
-function go(name, replace = false, immediate = false) {
+async function go(name, replace = false, immediate = false) {
+  // Complete any pending DOM swap before handling a second navigation request.
+  if (transition) await transition.updateCallbackDone.catch(() => {});
   if (!['home', 'intro', 'conditions', 'experience'].includes(name)) name = 'home';
   if (name === screen && !immediate) return;
   if (transition) transition.skipTransition();
+  const motion = name === 'home' ? 'dissolve' : screen === 'home' && name === 'intro' ? 'home-intro' : 'click';
+  document.documentElement.dataset.pageMotion = motion;
   if (document.startViewTransition && !reduceMotion.matches && !immediate) {
-    transition = document.startViewTransition(() => updateScreen(name, replace));
-    transition.finished.catch(() => {}).finally(() => { transition = null; });
+    const current = document.startViewTransition(() => updateScreen(name, replace));
+    transition = current;
+    current.ready.catch(() => {}); // A rapid second navigation may skip the snapshot.
+    current.finished.catch(() => {}).finally(() => { if (transition === current) transition = null; });
   } else {
     updateScreen(name, replace);
     if (!immediate && !reduceMotion.matches) $('#' + name).classList.add('entering');
@@ -90,18 +100,52 @@ function conditionOffset(id, state) {
   return `left:${x}px;top:${y}px`;
 }
 function layers(config, condition = false) {
-  return ['default', 'hover', 'selected'].map(state => `<span class="art-state ${state}" style="${condition ? conditionOffset(config.id, state) : ''}"><img class="asset" src="assets/${config[state]}" alt=""></span>`).join('');
+  return ['default', 'hover', 'selected'].map(state => `<span class="art-state ${state}" style="${condition ? conditionOffset(config.id, state) : ''}">${ControlArtwork[config[state]]}</span>`).join('');
+}
+// Match the actual vector parts between Figma variants. Bars move, circles resize,
+// and only texture/filter differences dissolve. Interrupted motion starts in place.
+function animateArtwork(button, click = false) {
+  const state = button.classList.contains('is-selected') ? 'selected' : button.classList.contains('is-hover') ? 'hover' : 'default';
+  const sourceState = button.dataset.artState || 'default';
+  if (sourceState === state) return;
+  const source = button.querySelector('.art-state.' + sourceState);
+  const target = button.querySelector('.art-state.' + state);
+  const sourceParts = [...source.querySelectorAll('[data-motion-key]')];
+  const targetParts = [...target.querySelectorAll('[data-motion-key]')];
+  const boxes = new Map(sourceParts.map(el => [el.dataset.motionKey, el.getBoundingClientRect()]));
+  button.getAnimations({ subtree: true }).forEach(animation => animation.cancel());
+  button.dataset.artState = state;
+  button.querySelectorAll('.art-state').forEach(layer => { layer.style.opacity = layer === target ? '1' : '0'; });
+  if (reduceMotion.matches) return;
+  const timing = { duration: click ? 300 : 450, easing: click ? 'ease-in' : 'ease-in-out' };
+  const inverse = (from, to, svg) => {
+    const units = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
+    return `translate(${(from.x - to.x) / units}px,${(from.y - to.y) / units}px) scale(${from.width / to.width},${from.height / to.height})`;
+  };
+  for (const part of targetParts) {
+    const from = boxes.get(part.dataset.motionKey), to = part.getBoundingClientRect();
+    if (!from?.width || !from.height || !to.width || !to.height) continue;
+    part.animate([{ transform: inverse(from, to, part.ownerSVGElement) }, { transform: 'none' }], timing);
+    const old = sourceParts.find(el => el.dataset.motionKey === part.dataset.motionKey);
+    const oldBox = old.getBoundingClientRect();
+    old.animate([{ transform: inverse(from, oldBox, old.ownerSVGElement) }, { transform: inverse(to, oldBox, old.ownerSVGElement) }], timing);
+  }
+  source.animate([{ opacity: 1 }, { opacity: 0 }], timing);
+  target.animate([{ opacity: 0 }, { opacity: 1 }], timing);
 }
 function hoverStates(button) {
-  button.addEventListener('pointerenter', () => button.classList.add('is-hover'));
-  button.addEventListener('pointerleave', () => button.classList.remove('is-hover'));
-  button.addEventListener('focus', () => button.classList.add('is-hover'));
-  button.addEventListener('blur', () => button.classList.remove('is-hover'));
+  button.dataset.artState = 'default';
+  const hover = value => { button.classList.toggle('is-hover', value); animateArtwork(button); };
+  button.addEventListener('pointerenter', () => hover(true));
+  button.addEventListener('pointerleave', () => hover(false));
+  button.addEventListener('focus', () => hover(true));
+  button.addEventListener('blur', () => hover(false));
 }
 function updateConditions() {
   conditions.forEach(c => {
     const b = $(`[data-condition="${c.id}"]`);
     b.classList.toggle('is-selected', selected.has(c.id)); b.setAttribute('aria-pressed', selected.has(c.id));
+    animateArtwork(b, true);
   });
   field.setConditions(selected);
   $('#field-condition').textContent = conditions.filter(c => selected.has(c.id)).map(c => c.name).join(' + ') || 'Normal';
@@ -110,7 +154,7 @@ function updateConditions() {
 conditions.forEach(c => {
   const button = document.createElement('button'); button.className = 'condition'; button.dataset.condition = c.id;
   button.setAttribute('aria-label', c.name); button.setAttribute('aria-pressed', 'false');
-  button.innerHTML = `<span class="condition-art">${layers(c, true)}</span><span class="condition-label">${c.name}</span>`;
+  button.innerHTML = `<span class="condition-art"><span class="condition-geometry">${layers(c, true)}</span></span><span class="condition-label">${c.name}</span>`;
   hoverStates(button);
   button.onclick = () => {
     const next = FieldMath.toggleCondition(selected, c.id); selected.clear(); next.forEach(id => selected.add(id)); updateConditions();
@@ -130,6 +174,7 @@ const display = [
 function updateControls() {
   display.forEach(c => {
     const b = $(`[data-display="${c.id}"]`); b.classList.toggle('is-selected', controls[c.id]); b.setAttribute('aria-pressed', controls[c.id]);
+    animateArtwork(b, true);
   });
   const pause = $('#field-pause'); pause.textContent = controls.motion ? 'Pause motion' : 'Resume motion'; pause.setAttribute('aria-pressed', !controls.motion);
   field.setControls(controls);
@@ -140,6 +185,10 @@ display.forEach(c => {
   b.setAttribute('aria-label', c.name); b.innerHTML = layers(c); hoverStates(b);
   b.onclick = () => { controls[c.id] = !controls[c.id]; updateControls(); };
   const label = document.createElement('button'); label.className = 'display-label'; label.textContent = c.name; label.setAttribute('aria-label', 'Select ' + c.name); label.onclick = () => b.click();
+  label.addEventListener('pointerenter', () => { b.classList.add('is-hover'); animateArtwork(b); });
+  label.addEventListener('pointerleave', () => { b.classList.remove('is-hover'); animateArtwork(b); });
+  label.addEventListener('focus', () => { b.classList.add('is-hover'); animateArtwork(b); });
+  label.addEventListener('blur', () => { b.classList.remove('is-hover'); animateArtwork(b); });
   choice.append(b, label); $('#display-options').append(choice);
 });
 const eyeButton = $('.eye-control'); eyeButton.innerHTML = layers({ default: eyeButton.dataset.default, hover: eyeButton.dataset.hover, selected: eyeButton.dataset.selected }); hoverStates(eyeButton);
