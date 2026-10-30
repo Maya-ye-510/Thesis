@@ -1,0 +1,10 @@
+{
+  "name": "i-see-thesis",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Responsive I SEE visual-perception experience, based on Maya Ye's Figma design.",
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "check": "node --check app.js && node --check particle-field.js && node --check field-math.js"
+  }
+}

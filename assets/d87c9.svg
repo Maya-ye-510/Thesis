@@ -1,0 +1,19 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="194" height="214" viewBox="0 0 194 214" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="V - Normal">
+<ellipse id="Ellipse 8" cx="97" cy="97.1787" rx="97" ry="97.1787" fill="#8DCCFF"/>
+<g id="Ellipse 7" filter="url(#filter0_f_0_22)">
+<ellipse cx="97" cy="97.1787" rx="85.6489" ry="85.8068" fill="#FF01C8"/>
+</g>
+<ellipse id="Ellipse 6" cx="97.516" cy="96.6618" rx="40.7606" ry="40.8357" fill="#FFE96D"/>
+<g id="Ellipse 9">
+</g>
+<rect id="Rectangle 32" x="152" y="115" width="18" height="99" fill="#63E6E2"/>
+</g>
+<defs>
+<filter id="filter0_f_0_22" x="1.35106" y="1.37198" width="191.298" height="191.614" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="5" result="effect1_foregroundBlur_0_22"/>
+</filter>
+</defs>
+</svg>

@@ -1,0 +1,38 @@
+# Credentials and machine-local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+.npmrc
+.netrc
+.openai/
+.codex/
+.aws/
+.ssh/
+
+# Dependencies, caches and temporary files
+node_modules/
+__pycache__/
+*.py[cod]
+.cache/
+coverage/
+*.log
+.DS_Store
+._*
+.idea/
+.vscode/
+
+# Research references and generated QA artifacts stay outside the repository
+work/
+references/
+playwright-report/
+test-results/
+*.mov
+*.mp4
+*.zip
+*.tar.gz

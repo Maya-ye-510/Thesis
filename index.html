@@ -1,0 +1,37 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#e8e8e8"><title>I SEE — Prototype 2</title><link rel="stylesheet" href="style.css"></head><body><main id="viewport"><div id="stage">
+<section class="screen" id="home" data-node-id="166:137" aria-label="I SEE main screen">
+<img class="asset" src="assets/4b813.svg" alt="" style="left:-32px;top:-81px" data-node-id="167:177">
+<button id="enter" class="hero-title logo" aria-label="Enter I SEE" data-node-id="166:144"><span>I </span><span class="see">SEE</span></button>
+<div class="eye-small" data-eye="small" data-cx="938" data-cy="454" data-range="7"><img class="asset" src="assets/277cc.svg" alt="" style="left:0;top:0" data-node-id="166:145"><img class="asset" src="assets/8677c.svg" alt="" style="left:2px;top:2px" data-node-id="166:146"><img class="asset pupil" src="assets/66079.svg" alt="" style="left:11px;top:10px" data-node-id="166:147"></div>
+<img class="asset" src="assets/bf5f0.svg" alt="" style="left:1083px;top:552px" data-node-id="167:157"><img class="asset" src="assets/bf5f0.svg" alt="" style="left:331px;top:202px" data-node-id="167:156">
+<button class="about" data-go="intro" data-node-id="167:158">About</button><img class="asset" src="assets/51eec.svg" alt="" style="left:0;top:56px;transform:rotate(-.12deg)" data-node-id="166:148">
+</section>
+<section class="screen" id="intro" data-node-id="156:70" aria-label="About I SEE" hidden><header class="page-header"><button class="logo logo-small" data-go="home" aria-label="I SEE home"><span>I </span><span class="see">SEE</span></button></header><div class="intro-layout">
+<div class="intro-graphic" aria-hidden="true"><div class="eye-artboard"><img class="asset" src="assets/1ab2c.svg" alt="" style="left:-2.442px;top:0" data-node-id="166:136">
+
+<div class="eye-large" data-eye="large" data-cx="955.04" data-cy="395.5" data-range="34"><img class="asset" src="assets/5618a.svg" alt="" style="left:0;top:0" data-node-id="157:98"><div class="pupil"><img class="asset" src="assets/0e9e3.svg" alt="" style="left:40px;top:41px" data-node-id="157:99"><img class="asset" src="assets/5b2bd.svg" alt="" style="left:78px;top:79px" data-node-id="157:100"></div></div></div></div>
+<div class="intro-text"><div class="intro-phrases" data-node-id="174:184"><p>“I see = I understand”</p><p>“我清楚了 = 我理解了”</p><p>“Je vois = Je comprends”</p></div>
+<p class="intro-copy first" data-node-id="180:187">In multiple languages, a phrase that literally means visual clarity is used to communicate comprehension, and this shows that vision is the primary sense used to build understanding of the world.</p>
+<p class="intro-copy second" data-node-id="186:188">Explore different ways of seeing the world in this experience. See how vision impacts people understanding, memorizing , and reconstruction of the some world around them.</p>
+<button id="start" class="start" data-go="conditions" data-node-id="190:213"><span class="start-line left"></span><span class="start-text">Click To Start</span><span class="start-line right"></span></button></div></div>
+</section>
+<section class="screen" id="conditions" data-node-id="197:256" aria-label="Choose your personal condition" hidden>
+<button class="logo logo-small" data-go="home" aria-label="I SEE home" data-node-id="197:257"><span>I </span><span class="see">SEE</span></button>
+<p class="condition-title" data-node-id="197:263">For this trip, you can customize your personal condition</p><p class="condition-subtitle" data-node-id="247:170">You can select multiple conditions except “Normal”</p>
+<div id="condition-options" role="group" aria-label="Personal conditions"></div>
+<div id="bubbles" aria-hidden="true"></div>
+<img class="asset" src="assets/def58.svg" alt="" style="left:-366px;top:757px;transform:rotate(-.12deg)" data-node-id="212:489">
+<button class="next" data-go="experience" data-node-id="221:3169">Next Page</button>
+</section>
+<section class="screen" id="experience" data-node-id="221:497" aria-label="Experience" hidden>
+<button class="logo logo-small" data-go="home" aria-label="I SEE home" data-node-id="221:498"><span>I </span><span class="see">SEE</span></button>
+<img class="asset" src="assets/808ac.svg" alt="" style="left:0;top:757px" data-node-id="252:175">
+<div class="blue-panel" data-node-id="252:182">
+<canvas id="particle-canvas" tabindex="0" role="img" aria-label="Interactive particle field. Drag to explore; scroll or use arrow keys to change depth." aria-describedby="field-help"></canvas>
+<div class="field-top"><span id="field-condition">Normal</span><button id="field-pause" aria-pressed="false">Pause motion</button></div>
+<div class="field-bottom"><p id="field-help">Drag to explore · Scroll to move closer</p><label class="depth-control">Focus distance <input id="focus-depth" type="range" min="0" max="100" value="35" aria-label="Focus distance"></label></div>
+</div>
+<button class="variant-button eye-control" data-go="conditions" aria-label="Change personal conditions" data-default="8f3a0.svg" data-hover="ecdf1.svg" data-selected="c471a.svg" data-node-id="252:279"><img class="asset" src="assets/8f3a0.svg" alt=""></button>
+<div id="display-options" role="group" aria-label="Display focus"></div>
+</section>
+</div></main><script src="field-math.js"></script><script src="particle-field.js"></script><script src="app.js"></script></body></html>
