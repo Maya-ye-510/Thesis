@@ -33,11 +33,11 @@
 <button class="logo logo-small" data-go="home" aria-label="I SEE home" data-node-id="221:498"><span>I </span><span class="see">SEE</span></button>
 <img class="asset" src="assets/808ac.svg" alt="" style="left:0;top:757px" data-node-id="252:175">
 <div class="blue-panel" data-node-id="252:182">
-<canvas id="particle-canvas" tabindex="0" role="img" aria-label="Interactive particle field. Drag to explore; scroll or use arrow keys to change depth." aria-describedby="field-help"></canvas>
+<canvas id="particle-canvas" tabindex="0" role="img" aria-label="Interactive particle field. Drag to rotate 360 degrees; scroll or use arrow keys to change focus." aria-describedby="field-help"></canvas>
 <div class="field-top"><span id="field-condition">Normal</span><button id="field-pause" aria-pressed="false">Pause motion</button></div>
-<div class="field-bottom"><p id="field-help">Drag to explore · Scroll to move closer</p><label class="depth-control">Focus distance <input id="focus-depth" type="range" min="0" max="100" value="35" aria-label="Focus distance"></label></div>
+<div class="field-bottom"><p id="field-help">Drag to rotate 360° · Scroll to focus</p><label class="depth-control">Focus distance <input id="focus-depth" type="range" min="0" max="100" value="35" aria-label="Focus distance"></label></div>
 </div>
 <button class="variant-button eye-control" data-go="conditions" aria-label="Change personal conditions" data-default="8f3a0.svg" data-hover="ecdf1.svg" data-selected="c471a.svg" data-node-id="252:279"><img class="asset" src="assets/8f3a0.svg" alt=""></button>
 <div id="display-options" role="group" aria-label="Display focus"></div>
 </section>
-</div></main><script src="field-math.js"></script><script src="particle-field.js"></script><script src="control-artwork.js"></script><script src="app.js"></script></body></html>
+</div></main><dialog id="condition-alert" aria-labelledby="condition-alert-title"><p id="condition-alert-title">Please select at least one condition.</p><button id="condition-alert-close" autofocus>OK</button></dialog><script src="field-math.js"></script><script src="particle-field.js"></script><script src="control-artwork.js"></script><script src="app.js"></script></body></html>
