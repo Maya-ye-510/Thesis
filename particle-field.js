@@ -1,14 +1,15 @@
 /* An immersive repeating space, rendered with cached native Canvas 2D sprites. */
 (function (root) {
   'use strict';
-  const { clamp, project, focusZoom, blurAt, deutanColour } = root.FieldMath;
+  const { clamp, project, focusZoom, blurAt, visionColour } = root.FieldMath;
   const palette = ['#dfff33', '#63e6e2', '#ff563b', '#a65aff', '#fff064', '#20d8ff', '#101a48', '#ff48cf'];
-  const deutan = palette.map(deutanColour);
   class ParticleField {
     constructor(canvas, onDepth) {
       this.canvas = canvas; this.ctx = canvas.getContext('2d', { alpha: false }); this.onDepth = onDepth;
       this.camera = { yaw: 0, pitch: 0, zoom: 0 }; this.target = { ...this.camera }; this.focus = .35;
       this.conditions = new Set(); this.controls = { structure: false, colors: false, motion: false }; this.paused = false;
+      this.details = { colour: 'deutan', hemianopia: 'left' }; this.colourPalette = palette.map(c => visionColour(c));
+      this.lens = null; this.lockZoom = false; this.particleLimit = 0; this.lastGestureMoved = false;
       this.reduced = matchMedia('(prefers-reduced-motion: reduce)');
       this.active = false; this.time = 0; this.raf = 0; this.last = 0; this.width = this.height = 0; this.drag = null;
       this.sprites = new Map(); this.history = []; this.historyUntil = 0;
@@ -22,7 +23,7 @@
       canvas.addEventListener('lostpointercapture', () => { this.drag = null; });
       canvas.addEventListener('wheel', e => {
         if (e.ctrlKey) return;
-        e.preventDefault(); this.setFocus(this.focus - clamp(e.deltaY, -120, 120) * .0013);
+        e.preventDefault(); if (!this.lockZoom) this.setFocus(this.focus - clamp(e.deltaY, -120, 120) * .0013);
       }, { passive: false });
       canvas.addEventListener('keydown', e => this.key(e));
       document.addEventListener('visibilitychange', () => { if (document.hidden) this.stop(); else this.request(); });
@@ -50,12 +51,32 @@
       const dpr = Math.min(this.dpr, 1.5);
       this.scene.width = Math.round(rect.width * dpr); this.scene.height = Math.round(rect.height * dpr);
       this.sceneCtx.setTransform(dpr, 0, 0, dpr, 0, 0); this.history = [];
-      this.canvas.dataset.particleCount = String(this.width < 600 ? 2200 : this.particles.length); this.request();
+      this.canvas.dataset.particleCount = String(this.particleLimit || (this.width < 600 ? 2200 : this.particles.length)); this.request();
     }
     setActive(active) { this.active = active; this.last = 0; if (active) { this.resize(); this.request(); } else this.stop(); }
     setConditions(conditions) {
       this.conditions = new Set(conditions); this.canvas.dataset.conditions = [...conditions].sort().join(',') || 'normal';
       this.history = []; this.sprites.clear(); this.request();
+    }
+    setDetails(details) {
+      Object.assign(this.details, details); this.colourPalette = palette.map(c => visionColour(c, this.details.colour));
+      this.sprites.clear(); this.history = []; this.request();
+    }
+    liveState() {
+      return { camera: { ...this.camera }, target: { ...this.target }, time: this.time || 0, focus: this.focus,
+        conditions: [...(this.conditions || [])], details: { ...this.details }, controls: { ...this.controls }, paused: !!this.paused,
+        particleLimit: this.particleLimit || (this.width < 600 ? 2200 : 5400), lens: this.lens || null };
+    }
+    captureState() {
+      const state = this.conditions.has('snow') && !this.reduced.matches && this.lastPresentedState ? this.lastPresentedState : this.liveState();
+      return { ...state, camera: { ...state.camera }, target: { ...state.camera }, conditions: [...this.conditions], details: { ...this.details }, controls: { ...this.controls }, paused: this.paused };
+    }
+    restoreState(state, lens = null) {
+      this.camera = { ...state.camera }; this.target = { ...state.camera }; this.originPose = { ...state.camera };
+      this.time = state.time; this.focus = state.focus; this.particleLimit = state.particleLimit;
+      this.lens = lens; this.lastPresentedState = null; this.history = [];
+      this.setConditions(state.conditions); this.setDetails(state.details); this.setControls(state.controls); this.setPaused(state.paused);
+      this.updateRotation(); this.canvas.dataset.focus = this.focus.toFixed(3);
     }
     setControls(controls) {
       if (Object.keys(controls).some(key => controls[key] !== this.controls[key])) this.historyUntil = performance.now() + 320;
@@ -69,10 +90,12 @@
     pointerDown(e) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       this.canvas.focus({ preventScroll: true }); this.canvas.setPointerCapture(e.pointerId);
+      this.lastGestureMoved = false;
       this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, yaw: this.target.yaw, pitch: this.target.pitch };
     }
     pointerMove(e) {
       if (!this.drag || e.pointerId !== this.drag.id) return;
+      if (Math.hypot(e.clientX - this.drag.x, e.clientY - this.drag.y) > 4) this.lastGestureMoved = true;
       this.target.yaw = this.drag.yaw + (e.clientX - this.drag.x) / Math.max(200, this.width) * Math.PI * 2;
       this.target.pitch = clamp(this.drag.pitch + (e.clientY - this.drag.y) / Math.max(200, this.height) * Math.PI, -Math.PI / 3, Math.PI / 3);
       this.updateRotation(); this.request();
@@ -85,9 +108,15 @@
       e.preventDefault();
       if (e.key === 'ArrowLeft') this.target.yaw -= Math.PI / 12;
       if (e.key === 'ArrowRight') this.target.yaw += Math.PI / 12;
-      if (e.key === 'ArrowUp' || e.key === '+' || e.key === '=') this.setFocus(this.focus - .06);
-      if (e.key === 'ArrowDown' || e.key === '-') this.setFocus(this.focus + .06);
-      if (e.key === 'Home') { this.target = { yaw: 0, pitch: 0, zoom: 0 }; this.setFocus(.35); }
+      if (this.lockZoom) {
+        if (e.key === 'ArrowUp') this.target.pitch = clamp(this.target.pitch - Math.PI / 36, -Math.PI / 3, Math.PI / 3);
+        if (e.key === 'ArrowDown') this.target.pitch = clamp(this.target.pitch + Math.PI / 36, -Math.PI / 3, Math.PI / 3);
+        if (e.key === 'Home') this.target = { ...(this.originPose || this.camera) };
+      } else {
+        if (e.key === 'ArrowUp' || e.key === '+' || e.key === '=') this.setFocus(this.focus - .06);
+        if (e.key === 'ArrowDown' || e.key === '-') this.setFocus(this.focus + .06);
+        if (e.key === 'Home') { this.target = { yaw: 0, pitch: 0, zoom: 0 }; this.setFocus(.35); }
+      }
       this.updateRotation(); this.request();
     }
     updateRotation() { this.canvas.dataset.rotation = (this.target.yaw * 180 / Math.PI).toFixed(1) + ',' + (this.target.pitch * 180 / Math.PI).toFixed(1); }
@@ -95,6 +124,7 @@
       if (this.drag && this.canvas.hasPointerCapture(this.drag.id)) this.canvas.releasePointerCapture(this.drag.id);
       this.drag = null; this.camera = { yaw: 0, pitch: 0, zoom: 0 }; this.target = { ...this.camera };
       this.time = 0; this.last = 0; this.history = []; this.historyUntil = 0; this.paused = false;
+      this.lens = null; this.particleLimit = 0; this.lastPresentedState = null;
       this.conditions.clear(); this.sprites.clear(); this.controls = { structure: false, colors: false, motion: false };
       this.updateRotation(); this.setFocus(.35);
     }
@@ -137,7 +167,9 @@
     draw(timestamp) {
       const ctx = this.ctx, w = this.width, h = this.height, snow = this.conditions.has('snow');
       ctx.globalAlpha = 1; ctx.fillStyle = '#2548c3'; ctx.fillRect(0, 0, w, h);
-      const glow = ctx.createRadialGradient(w * .5, h * .46, 5, w * .5, h * .48, Math.max(w, h) * .7);
+      const l = this.lens, scale = l ? w * l.sizeRatio : 1;
+      const glow = l ? ctx.createRadialGradient(w * l.centerX, (l.sourceHeight * .46 - l.crop.y) * scale, 5 * scale, w * l.centerX, (l.sourceHeight * .48 - l.crop.y) * scale, Math.max(l.sourceWidth, l.sourceHeight) * .7 * scale)
+        : ctx.createRadialGradient(w * .5, h * .46, 5, w * .5, h * .48, Math.max(w, h) * .7);
       glow.addColorStop(0, '#537cf0'); glow.addColorStop(.43, '#294ad1'); glow.addColorStop(1, '#152bac');
       ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
       this.sceneCtx.clearRect(0, 0, w, h); this.drawParticles(this.sceneCtx);
@@ -145,30 +177,41 @@
       else ctx.drawImage(this.scene, 0, 0, w, h);
       this.canvas.dataset.snowDelay = snow && !this.reduced.matches ? '130' : '0';
       if (snow) this.drawDust(ctx);
+      if (this.conditions.has('hemianopia')) {
+        const middle = l ? w * l.centerX : w / 2, left = this.details.hemianopia !== 'right';
+        ctx.fillStyle = '#10277de8';
+        if (left) ctx.fillRect(0, 0, clamp(middle, 0, w), h); else ctx.fillRect(clamp(middle, 0, w), 0, Math.max(0, w - middle), h);
+      }
     }
     drawParticles(ctx) {
       const w = this.width, h = this.height, myopia = this.conditions.has('myopia'), colour = this.conditions.has('colour');
-      const points = [], count = w < 600 ? 2200 : this.particles.length;
+      const points = [], count = this.particleLimit || (w < 600 ? 2200 : this.particles.length), camera = { ...this.camera, lens: this.lens };
       for (let i = 0; i < count; i++) {
         const p = this.particles[i];
         const point = { x: p.x + Math.sin(this.time * p.speed + p.phase) * .36, y: p.y + Math.cos(this.time * p.speed * .8 + p.phase) * .26, z: p.z + Math.sin(this.time * p.speed * .7 + p.phase) * .18 };
-        const pos = project(point, this.camera, w, h), size = p.radius * pos.size;
-        if (!pos.visible || pos.x < -size * 2 || pos.y < -size * 2 || pos.x > w + size * 2 || pos.y > h + size * 2) continue;
+        const pos = project(point, camera, w, h);
+        // Connections use the source scene's same ordering, including off-crop neighbours.
+        const l = this.lens, sourceConnections = l && this.controls.structure;
+        const visiblePos = sourceConnections ? project(point, this.camera, l.sourceWidth, l.sourceHeight) : pos;
+        const size = p.radius * visiblePos.size, visibleW = sourceConnections ? l.sourceWidth : w, visibleH = sourceConnections ? l.sourceHeight : h;
+        if (!visiblePos.visible || visiblePos.x < -size * 2 || visiblePos.y < -size * 2 || visiblePos.x > visibleW + size * 2 || visiblePos.y > visibleH + size * 2) continue;
         pos.p = p; points.push(pos);
       }
       points.sort((a, b) => b.viewZ - a.viewZ);
       if (this.controls.structure) {
-        ctx.save(); ctx.strokeStyle = '#c9eeff'; ctx.globalAlpha = .22; ctx.lineWidth = .8;
+        const l = this.lens, scale = l ? w * l.sizeRatio : 1;
+        ctx.save(); ctx.strokeStyle = '#c9eeff'; ctx.globalAlpha = .22; ctx.lineWidth = .8 * scale;
         for (let i = 0; i < points.length - 3; i += 5) {
           const a = points[i], b = points[i + 3];
-          if (Math.abs(a.distance - b.distance) < 2 && Math.hypot(a.x - b.x, a.y - b.y) < Math.min(w, h) * .2) { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+          if (Math.abs(a.distance - b.distance) < 2 && Math.hypot(a.x - b.x, a.y - b.y) < (l ? Math.min(l.sourceWidth, l.sourceHeight) * scale : Math.min(w, h)) * .2) { ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
         } ctx.restore();
       }
       for (const pos of points) {
         const p = pos.p, box = p.radius * pos.size * 5;
         const index = this.controls.colors ? (p.color + Math.floor(this.time * .18)) % palette.length : p.color;
-        const color = colour ? deutan[index] : palette[index];
-        const blur = blurAt(pos.distance, myopia);
+        const color = colour ? this.colourPalette[index] : palette[index];
+        const opticalScale = this.lens ? w * this.lens.sizeRatio : 1;
+        const blur = blurAt(pos.distance, myopia) * opticalScale;
         const type = this.controls.structure && p.type === 'disc' && p.radius > 15 ? 'ring' : p.type;
         // Convert optical blur in screen pixels into sprite pixels before caching.
         const sprite = this.sprite(type, color, blur * 160 / Math.max(12, box));
@@ -176,6 +219,11 @@
         ctx.globalAlpha = (.95 - pos.depth * .38) * nearFade * fog;
         ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate(p.rotation + this.camera.yaw + this.time * p.speed * .06);
         ctx.drawImage(sprite, -box / 2, -box / 2, box, box); ctx.restore();
+        if (this.conditions.has('astigmatism')) {
+          const alpha = ctx.globalAlpha; ctx.globalAlpha = alpha * .22;
+          ctx.drawImage(sprite, pos.x - box / 2 + 4 * opticalScale, pos.y - box / 2 - 2 * opticalScale, box, box);
+          ctx.globalAlpha = alpha;
+        }
       }
       ctx.globalAlpha = 1; this.canvas.dataset.rendered = String(points.length);
     }
@@ -185,25 +233,28 @@
         const frame = history.length === 7 ? history.shift() : { canvas: document.createElement('canvas') };
         if (frame.canvas.width !== this.scene.width || frame.canvas.height !== this.scene.height) { frame.canvas.width = this.scene.width; frame.canvas.height = this.scene.height; }
         const ctx = frame.canvas.getContext('2d'); ctx.clearRect(0, 0, frame.canvas.width, frame.canvas.height); ctx.drawImage(this.scene, 0, 0);
-        frame.time = timestamp; history.push(frame);
+        frame.time = timestamp; frame.state = this.liveState(); history.push(frame);
       }
       const delayed = history.findLast(frame => frame.time <= timestamp - 130) || history[0];
       const echo = history.findLast(frame => frame.time <= timestamp - 260);
       if (echo && echo !== delayed) { this.ctx.globalAlpha = .18; this.ctx.drawImage(echo.canvas, 0, 0, w, h); }
       this.ctx.globalAlpha = 1; this.ctx.drawImage(delayed.canvas, 0, 0, w, h);
+      this.lastPresentedState = delayed.state;
     }
     drawDust(ctx) {
-      const w = this.width, h = this.height, count = w < 600 ? 35 : this.dust.length;
+      const l = this.lens, w = l ? l.sourceWidth : this.width, h = l ? l.sourceHeight : this.height, scale = l ? this.width * l.sizeRatio : 1;
+      const count = w < 600 ? 35 : this.dust.length;
       const dust = this.sprite('disc', '#d4d7de', 8);
       for (let i = 0; i < count; i++) {
         const p = this.dust[i];
-        const x = ((p.x + this.time * p.speed * .09 + Math.sin(this.time * .25 + p.phase) * .025 - this.camera.yaw * .012) % 1 + 1) % 1 * w;
-        const y = ((p.y - this.time * p.speed * .06 + Math.cos(this.time * .2 + p.phase) * .035 - this.camera.pitch * .02) % 1 + 1) % 1 * h;
-        ctx.globalAlpha = .12 + (i % 3) * .055; ctx.drawImage(dust, x - p.radius * 2, y - p.radius * 2, p.radius * 4, p.radius * 4);
+        const x = (((p.x + this.time * p.speed * .09 + Math.sin(this.time * .25 + p.phase) * .025 - this.camera.yaw * .012) % 1 + 1) % 1 * w - (l ? l.crop.x : 0)) * scale;
+        const y = (((p.y - this.time * p.speed * .06 + Math.cos(this.time * .2 + p.phase) * .035 - this.camera.pitch * .02) % 1 + 1) % 1 * h - (l ? l.crop.y : 0)) * scale;
+        const r = p.radius * scale;
+        ctx.globalAlpha = .12 + (i % 3) * .055; ctx.drawImage(dust, x - r * 2, y - r * 2, r * 4, r * 4);
       }
       ctx.fillStyle = '#e6e8ed'; ctx.globalAlpha = .2;
       const seed = Math.floor(this.time * 9);
-      for (let i = 0; i < 450; i++) ctx.fillRect(((i * 137.508 + seed * 13) % 1000) / 1000 * w, ((i * 73.18 + seed * 7) % 997) / 997 * h, 1, 1);
+      for (let i = 0; i < 450; i++) ctx.fillRect((((i * 137.508 + seed * 13) % 1000) / 1000 * w - (l ? l.crop.x : 0)) * scale, (((i * 73.18 + seed * 7) % 997) / 997 * h - (l ? l.crop.y : 0)) * scale, scale, scale);
       ctx.globalAlpha = 1;
     }
   }

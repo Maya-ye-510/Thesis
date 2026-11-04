@@ -32,3 +32,12 @@ test('Visual snow displays genuinely older scene frames and keeps its history bo
   assert.ok(shown.length === 2, 'An older afterimage accompanies the delayed scene');
   assert.ok(shown[0] < shown[1]);
 });
+
+test('Result keyboard exploration rotates and tilts without changing captured zoom', () => {
+  const field=fieldPrototype();
+  Object.assign(field,{lockZoom:true,target:{yaw:.3,pitch:.1,zoom:-2},camera:{yaw:.3,pitch:.1,zoom:-2},originPose:{yaw:.3,pitch:.1,zoom:-2},canvas:{dataset:{}},request(){},setFocus(){throw Error('Result must not zoom');}});
+  for (const key of ['+','-','=','ArrowRight','ArrowUp','ArrowDown']) field.key({key,preventDefault(){}});
+  assert.equal(field.target.zoom,-2); assert.ok(field.target.yaw>.3);
+  field.key({key:'Home',preventDefault(){}});
+  assert.equal(field.target.zoom,-2); assert.equal(field.target.yaw,.3); assert.equal(field.target.pitch,.1);
+});

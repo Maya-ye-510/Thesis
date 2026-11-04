@@ -22,11 +22,12 @@
     const relative = { x: wrap(point.x - eye.x), y: wrap(point.y - eye.y), z: wrap(point.z - eye.z) };
     const rotated = rotate(relative, yaw, pitch);
     const distance = Math.hypot(relative.x, relative.y, relative.z);
-    const perspective = 6 / Math.max(.7, rotated.z);
-    const focal = Math.min(width, height) * .8;
+    const lens = camera.lens;
+    const perspective = 6 / Math.max(.7, rotated.z) * (lens ? width * lens.sizeRatio : 1);
+    const focal = lens ? width * lens.focalRatio : Math.min(width, height) * .8;
     return {
-      x: width / 2 + rotated.x * focal / Math.max(.7, rotated.z),
-      y: height / 2 + rotated.y * focal / Math.max(.7, rotated.z),
+      x: width * (lens ? lens.centerX : .5) + rotated.x * focal / Math.max(.7, rotated.z),
+      y: height * (lens ? lens.centerY : .5) + rotated.y * focal / Math.max(.7, rotated.z),
       size: perspective,
       distance,
       viewZ: rotated.z,
@@ -37,14 +38,21 @@
   function blurAt(distance, myopia) {
     return myopia ? clamp((distance - 4.2) * .7, 0, 9) : 0;
   }
-  function deutanColour(hex) {
+  function visionColour(hex, type = 'deutan') {
     const bytes = hex.replace('#', '').match(/../g).map(v => parseInt(v, 16) / 255);
     const linear = bytes.map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
-    const matrix = [[.367322, .860646, -.227968], [.280085, .672501, .047413], [-.01182, .04294, .968881]];
+    const matrices = {
+      deutan: [[.367322, .860646, -.227968], [.280085, .672501, .047413], [-.01182, .04294, .968881]],
+      protan: [[.152286,1.052583,-.204868],[.114503,.786281,.099216],[-.003882,-.048116,1.051998]],
+      tritan: [[1.255528,-.076749,-.178779],[-.078411,.930809,.147602],[.004733,.691367,.3039]],
+      weak: [[.547494,.607765,-.155259],[.181692,.781742,.036566],[-.010410,.027275,.983136]]
+    };
+    const matrix = matrices[type] || matrices.deutan;
     const rgb = matrix.map(row => clamp(row.reduce((sum, k, i) => sum + k * linear[i], 0), 0, 1));
     return '#' + rgb.map(v => Math.round(255 * (v <= .0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - .055)).toString(16).padStart(2, '0')).join('');
   }
-  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, deutanColour };
+  const deutanColour = hex => visionColour(hex, 'deutan');
+  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, visionColour, deutanColour };
   root.FieldMath = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(globalThis);
