@@ -7,8 +7,8 @@ const FieldMath = require('../field-math.js');
 
 function fieldPrototype() {
   const context = { FieldMath, document: { createElement: () => {
-    const canvas = { width: 0, height: 0, stamp: null };
-    canvas.getContext = () => ({ clearRect() {}, drawImage(source) { canvas.stamp = source.stamp; } });
+    const canvas = { width: 0, height: 0, stamp: null, strokes:0 };
+    canvas.getContext = () => ({ clearRect() {}, drawImage(source) { canvas.stamp = source.stamp; },translate(){},rotate(){},save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},arc(){},fill(){},stroke(){canvas.strokes++;},createLinearGradient(){return {addColorStop(){}};} });
     return canvas;
   } } };
   vm.createContext(context);
@@ -40,4 +40,31 @@ test('Result keyboard exploration rotates and tilts without changing captured zo
   assert.equal(field.target.zoom,-2); assert.ok(field.target.yaw>.3);
   field.key({key:'Home',preventDefault(){}});
   assert.equal(field.target.zoom,-2); assert.equal(field.target.yaw,.3); assert.equal(field.target.pitch,.1);
+});
+
+test('Paused particles keep their time while manual rotation remains responsive', () => {
+  const field=fieldPrototype();
+  Object.assign(field,{active:true,width:1000,paused:true,reduced:{matches:false},camera:{yaw:0,pitch:0,zoom:0},target:{yaw:1,pitch:0,zoom:0},time:7,last:1000,conditions:new Set(),canvas:{dataset:{}},draw(){},request(){}});
+  field.frame(1050);assert.equal(field.time,7);assert.ok(field.camera.yaw>0);
+  field.paused=false;field.frame(1100);assert.ok(field.time>7);
+});
+test('Lost visual fields are fully black away from the feathered luminous edge', () => {
+  for(const mode of ['left','right','side']){
+    const field=fieldPrototype(),fills=[];
+    const ctx={globalAlpha:1,fillStyle:'',createLinearGradient(){return{addColorStop(){}};},fillRect(x,y,w,h){fills.push({x,w,fill:this.fillStyle});},save(){},restore(){},beginPath(){},rect(){},clip(){},arc(){},stroke(){}};
+    Object.assign(field,{width:1000,height:600,time:0,lens:null,details:{hemianopia:mode}});field.drawFieldLoss(ctx);
+    const black=fills.filter(f=>f.fill==='#000');
+    if(mode!=='right')assert.ok(black.some(f=>f.x===0&&f.w>300));
+    if(mode!=='left')assert.ok(black.some(f=>f.x>500&&f.x+f.w>=1000));
+  }
+});
+
+
+test('Astigmatism adds cached radial strokes; the expanded base palette omits dark grey/navy', () => {
+  const field=fieldPrototype();field.sprites=new Map();
+  const normal=field.sprite('disc','#ff563b',0,false),astig=field.sprite('disc','#ff563b',0,true);
+  assert.equal(normal.strokes,0);assert.equal(astig.strokes,4);
+  assert.equal(field.sprite('disc','#ff563b',0,true),astig);
+  assert.ok(field.constructor.palette.length>=12);
+  assert.ok(!field.constructor.palette.includes('#101a48'));
 });

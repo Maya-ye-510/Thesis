@@ -1,0 +1,72 @@
+/* November refinements: preserve the author's composition and make each optical choice visible. */
+:root[data-page-motion=home-intro]::view-transition-old(iris){animation:none;opacity:0}
+:root[data-page-motion=home-intro]::view-transition-new(iris){animation:none;opacity:1;mix-blend-mode:normal}
+:root[data-page-motion=home-intro]::view-transition-group(iris){animation-duration:700ms;animation-timing-function:ease-in-out}
+.optical-defs{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+#conditions .condition-label{transition:color 300ms ease-in,font-size 300ms ease-in}
+#conditions .condition.is-selected .condition-label{font-size:12px;color:#3e7eff}
+.chosen-detail{font-size:12px;color:#3e7eff}
+.condition-details-toggle{transition:transform 700ms ease-in-out}
+.condition-details-toggle img{transition:transform 700ms ease-in-out}
+.condition-card.is-open .condition-details-toggle img{transform:rotate(-90deg) scaleY(-1)}
+#condition-details{position:fixed;z-index:30;margin:0;border:1.5px solid #3e7eff;background:#f9f9f9;color:#555;padding:10px 11px;width:246px;max-width:calc(100vw - 24px);box-shadow:none;font:14px/1.55 Manrope}
+#condition-details[hidden]{display:none!important}
+#detail-options{display:grid;gap:6px}
+#detail-options label{display:flex;gap:8px;align-items:center;white-space:nowrap;cursor:pointer}
+#detail-options input{appearance:none;width:8px;height:8px;flex:none;margin:0;border:0;background:#d6d6d6;border-radius:50%;cursor:pointer}
+#detail-options input:checked{background:#ff2856}
+#detail-options input:focus-visible{outline:1.5px solid #3e7eff;outline-offset:3px}
+#detail-clear{font-size:11px;color:#3e7eff;margin:8px 0 0 16px}
+[data-condition=colour] .condition-geometry{transition:filter 700ms ease-in-out}
+[data-condition=colour]:is(.is-hover,.is-selected) .condition-geometry{filter:var(--vision-filter)}
+.preview-rays{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 700ms ease-in-out;z-index:4}
+.preview-rays i{position:absolute;left:-18%;top:45.4%;width:136%;height:2px;transform-origin:center;background:linear-gradient(90deg,transparent,#ffdc8777 25%,#fff6b9 49%,#ffdc8777 75%,transparent);box-shadow:0 0 5px #ffe96d;filter:blur(.5px)}
+.preview-rays i:nth-child(2){transform:rotate(90deg);scale:.82}
+.preview-rays i:nth-child(3){transform:rotate(38deg);scale:.7}
+.preview-rays i:nth-child(4){transform:rotate(-38deg);scale:.7}
+[data-condition=astigmatism]:is(.is-hover,.is-selected) .preview-rays{opacity:1}
+.hemi-shade{position:absolute;left:0;top:0;width:100%;aspect-ratio:1;border-radius:50%;z-index:4;pointer-events:none;opacity:0;transition:opacity 700ms ease-in-out;overflow:hidden}
+.hemi-shade.left{background:linear-gradient(90deg,#000 0 38%,#000e 47%,#0008 55%,transparent 72%)}
+.hemi-shade.right{background:linear-gradient(270deg,#000 0 38%,#000e 47%,#0008 55%,transparent 72%)}
+.hemi-shade.side{background:linear-gradient(90deg,#000 0 24%,#000b 32%,transparent 40% 60%,#000b 68%,#000 76%)}
+.hemi-shade:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 39%,#65ffd833 49%,transparent 59%);filter:blur(5px)}
+.hemi-shade.right:after{transform:scaleX(-1)}
+.hemi-shade.side:after{background:linear-gradient(90deg,transparent 20%,#65ffd866 32%,transparent 40% 60%,#65ffd866 68%,transparent 80%)}
+[data-condition=hemianopia][data-hemisphere=left]:is(.is-hover,.is-selected) .hemi-shade.left,
+[data-condition=hemianopia][data-hemisphere=right]:is(.is-hover,.is-selected) .hemi-shade.right,
+[data-condition=hemianopia][data-hemisphere=side]:is(.is-hover,.is-selected) .hemi-shade.side{opacity:1}
+.eye-control[aria-disabled=true]{cursor:default}
+.symptom-dot{position:relative;width:39px;height:39px;border:0;background:var(--cyan);box-shadow:none;isolation:isolate;transition:transform 450ms ease-in-out}
+.symptom-dot:before{content:'';position:absolute;inset:6px;border-radius:50%;background:var(--yellow);filter:blur(2px);transition:inset 450ms ease-in-out,filter 450ms ease-in-out}
+.symptom-dot:after{content:'';position:absolute;inset:7px;border:1px solid #ff01c855;border-radius:50%;filter:blur(2px);pointer-events:none}
+.result-symptom:hover .symptom-dot{transform:none}
+.result-symptom:hover .symptom-dot:before,.result-symptom:focus-visible .symptom-dot:before{inset:11px;filter:blur(1.5px)}
+.eye-anatomy{display:block;overflow:visible}
+.eye-optics{transform-origin:1160px 410px;will-change:transform}
+.anatomy-geometry{transform:translate(0,0) scale(1);transform-origin:0 0;transition:transform 700ms ease-in-out}
+.detail-rays{opacity:0;transition:opacity 700ms ease-in-out}
+.diagram-line{transition:opacity 700ms ease-in-out}
+.result-window{transition:left 700ms ease-in-out,top 700ms ease-in-out}
+.condition-explanation{position:absolute;z-index:3;left:14.2857%;top:23.678%;width:27.8677%;height:47%;font:clamp(12px,min(1.267vw,2.164dvh),18px)/1.4 Manrope;pointer-events:none}
+.condition-explanation p{position:absolute;left:0;width:100%;background:var(--paper)}
+#condition-overview{top:0}#condition-interpretation{top:49.1%}
+.is-explaining .result-window{left:-22.5194%;top:13.4615%}
+.is-explaining .anatomy-geometry{transform:translate(-68.4px,83.2px) scale(.8)}
+.is-explaining .detail-rays{opacity:1}
+.is-explaining .diagram-line{opacity:0}
+.is-explaining #result-symptoms{left:14.2857%;top:17.13%!important;width:28%;justify-content:flex-start;transform:translateY(-50%)}
+.is-explaining .result-symptom:not(.is-explained){opacity:0;pointer-events:none;position:absolute}
+.is-explaining .result-symptom.is-explained{flex:none;gap:12px;width:max-content;max-width:100%;padding:0;background:transparent}
+.is-explaining .result-symptom.is-explained .symptom-label{position:static;transform:none;text-align:left;width:auto;font-size:clamp(17px,min(1.689vw,2.885dvh),24px)}
+.is-explaining .symptom-subtype{display:none}
+.is-explaining .result-window>p{opacity:0}
+@media(max-width:700px){
+ .chosen-detail{font-size:12px}
+ .symptom-dot{width:30px;height:30px}.symptom-dot:before{inset:5px}.result-symptom:hover .symptom-dot:before{inset:9px}
+ .is-explaining .result-window{left:-43%;top:13%;width:55vw;height:50dvh;transform:none}
+ .is-explaining #result-symptoms{left:18%;width:74%;top:17%!important}
+ .condition-explanation{left:18%;top:23%;width:73%;height:41%;font-size:clamp(12px,1.8dvh,15px);line-height:1.45}
+ #condition-interpretation{top:52%}
+ .is-explaining .result-artwork{bottom:-1%;right:0}
+}
+@media(prefers-reduced-motion:reduce){.anatomy-geometry,.result-window,.preview-rays,.hemi-shade,.condition-details-toggle img,.symptom-dot:before,.diagram-line,.detail-rays{transition:none!important}}

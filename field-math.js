@@ -38,21 +38,22 @@
   function blurAt(distance, myopia) {
     return myopia ? clamp((distance - 4.2) * .7, 0, 9) : 0;
   }
-  function visionColour(hex, type = 'deutan') {
-    const bytes = hex.replace('#', '').match(/../g).map(v => parseInt(v, 16) / 255);
-    const linear = bytes.map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
-    const matrices = {
+  const COLOUR_MATRICES = {
       deutan: [[.367322, .860646, -.227968], [.280085, .672501, .047413], [-.01182, .04294, .968881]],
       protan: [[.152286,1.052583,-.204868],[.114503,.786281,.099216],[-.003882,-.048116,1.051998]],
       tritan: [[1.255528,-.076749,-.178779],[-.078411,.930809,.147602],[.004733,.691367,.3039]],
       weak: [[.547494,.607765,-.155259],[.181692,.781742,.036566],[-.010410,.027275,.983136]]
     };
-    const matrix = matrices[type] || matrices.deutan;
+  function visionColour(hex, type = 'deutan') {
+    const bytes = hex.replace('#', '').match(/../g).map(v => parseInt(v, 16) / 255);
+    const linear = bytes.map(v => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4);
+    const matrix = COLOUR_MATRICES[type] || COLOUR_MATRICES.deutan;
     const rgb = matrix.map(row => clamp(row.reduce((sum, k, i) => sum + k * linear[i], 0), 0, 1));
     return '#' + rgb.map(v => Math.round(255 * (v <= .0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - .055)).toString(16).padStart(2, '0')).join('');
   }
+  function visibleField(width,type='left'){return type==='side'?[width*.34,width*.66]:type==='right'?[0,width*.5]:[width*.5,width];}
   const deutanColour = hex => visionColour(hex, 'deutan');
-  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, visionColour, deutanColour };
+  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, visionColour, deutanColour, COLOUR_MATRICES, visibleField };
   root.FieldMath = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(globalThis);

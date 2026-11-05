@@ -51,3 +51,21 @@ test('Colour subtypes preserve neutral colours while producing distinct views of
   }
   assert.equal(views.size,4);
 });
+
+test('Hemianopia supports left, right, and side selections without accumulating subtypes', () => {
+  const s=new ConditionSelection();
+  for(const side of ['left','right','side']){
+    s.setDetail('hemianopia',side);
+    assert.equal(s.details.hemianopia,side);
+    assert.equal(s.entries().length,1);
+  }
+  assert.equal(s.entries()[0].detail,'Side · central view');
+});
+test('Each selected condition has two distinct explanation blocks', () => {
+  const notes=require('../condition-notes.js');
+  for(const condition of ['normal','myopia','colour','astigmatism','snow','hemianopia']){
+    assert.ok(notes[condition].overview.length>70);
+    assert.ok(notes[condition].interpretation.length>70);
+    assert.notEqual(notes[condition].overview,notes[condition].interpretation);
+  }
+});

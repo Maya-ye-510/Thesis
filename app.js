@@ -4,7 +4,7 @@ const {CONDITIONS,ConditionSelection,initialCrop,moveCrop,resizeCrop,cropLens}=S
 const selection=new ConditionSelection();
 const controls={structure:false,colors:false,motion:false};
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
-let screen='home',transition=null,cropping=false,cropRect=null,cropDrag=null,capture=null,comparing=null,capturing=false,revision=0;
+let screen='home',transition=null,cropping=false,cropRect=null,cropDrag=null,capture=null,comparing=null,capturing=false,revision=0,detailAnchor=null;
 const homeCenter=document.createElement('div');homeCenter.className='home-center';$('#home').append(homeCenter);homeCenter.append($('#enter'),$('.eye-small'));
 const homeBackground=document.createElement('div');homeBackground.className='home-background';$('#home').prepend(homeBackground);homeBackground.append($('#home > img[data-node-id="167:177"]'));
 $$('#home img[data-node-id="167:157"],#home img[data-node-id="167:156"]').forEach((el,i)=>{el.className='home-cross '+(i?'first':'second');el.style.left='';el.style.top='';});
@@ -24,23 +24,36 @@ function sizeArtwork(){
 new ResizeObserver(sizeArtwork).observe($('.intro-graphic'));new ResizeObserver(sizeArtwork).observe($('#condition-options'));addEventListener('resize',sizeArtwork);
 
 function updateScreen(name,replace){
- screen=name;$$('.screen').forEach(el=>{el.hidden=el.id!==name;el.classList.remove('entering');});
- document.title='I SEE — '+({home:'Prototype 2',intro:'About',conditions:'Personal condition',experience:'Experience',result:'The world in your eyes'})[name];
+ screen=name;if(name!=='conditions')closeDetails();$$('.screen').forEach(el=>{el.hidden=el.id!==(name==='detail'?'result':name);el.classList.remove('entering');});
+ document.title='I SEE — '+({home:'Prototype 2',intro:'About',conditions:'Personal condition',experience:'Experience',result:'The world in your eyes',detail:'Ways of seeing'})[name];
  if(replace)history.replaceState({screen:name},'','#'+name);else if(location.hash!=='#'+name)history.pushState({screen:name},'','#'+name);
- field.setActive(name==='experience');resultField.setActive(name==='result');
+ field.setActive(name==='experience');const showResult=name==='result'||name==='detail';if(resultField.active!==showResult)resultField.setActive(showResult);
+ $('#result').classList.toggle('is-explaining',name==='detail');$('.condition-explanation').hidden=name!=='detail';
+ $('#result').setAttribute('aria-label',name==='detail'?'Condition explanation':'The world in your eyes');
+ $$('.result-symptom').forEach(b=>{const hidden=name==='detail'&&b.dataset.symptom!==comparing;b.inert=hidden;b.setAttribute('aria-hidden',hidden);});
+ $('.result-window>p').setAttribute('aria-hidden',name==='detail');
+ if(name==='result'&&capture){comparing=null;renderSymptoms();}
  if(name==='home')resetExperience();
  if(name==='experience'){Object.assign(controls,{structure:false,colors:false,motion:false});field.setPaused(false);updateConditions();updateControls();}
  if(name!=='experience'){cropping=false;$('#crop-frame').hidden=true;$('#crop-actions').hidden=true;$('.blue-panel').classList.remove('is-cropping');}
  sizeArtwork();resetEyes();scrollTo({top:0,behavior:'instant'});
- requestAnimationFrame(()=>{sizeArtwork();const el=$('#'+name);el.setAttribute('tabindex','-1');el.focus({preventScroll:true});});
+ requestAnimationFrame(()=>{sizeArtwork();const el=$('#'+(name==='detail'?'result':name));el.setAttribute('tabindex','-1');el.focus({preventScroll:true});});
 }
 async function go(name,replace=false,immediate=false){
  if(transition)await transition.updateCallbackDone.catch(()=>{});
- if(!['home','intro','conditions','experience','result'].includes(name))name='home';
- if(name==='result'&&!capture)name='experience';
- if((name==='experience'||name==='result')&&!selection.selected.size){name='conditions';history.replaceState({screen:name},'','#conditions');}
+ if(!['home','intro','conditions','experience','result','detail'].includes(name))name='home';
+ if((name==='result'||name==='detail')&&!capture)name='experience';
+ if((name==='experience'||name==='result'||name==='detail')&&!selection.selected.size){name='conditions';history.replaceState({screen:name},'','#conditions');}
  if(name===screen&&!immediate)return;
  if(transition)transition.skipTransition();
+ if((screen==='result'&&name==='detail')||(screen==='detail'&&name==='result')){
+  const id=comparing,button=$(`[data-symptom="${id}"]`),boxes=button?[...button.querySelectorAll('.symptom-dot,.symptom-label')].map(el=>el.getBoundingClientRect()):[];
+  document.documentElement.dataset.pageMotion='result-detail';updateScreen(name,replace);
+  const next=$(`[data-symptom="${id}"]`);
+  if(!reduceMotion.matches&&next){next.querySelectorAll('.symptom-dot,.symptom-label').forEach((el,i)=>{const from=boxes[i],to=el.getBoundingClientRect();if(from&&to.width)el.animate([{transform:`translate(${from.x-to.x}px,${from.y-to.y}px)`},{transform:'none'}],{duration:700,easing:'ease-in-out'});});
+   if(name==='detail')$('.condition-explanation').animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:700,easing:'ease-in-out'});
+  }return;
+ }
  const motion=name==='home'?'dissolve':screen==='home'&&name==='intro'?'home-intro':screen==='intro'&&name==='conditions'?'intro-conditions':screen==='experience'&&name==='result'?'crop-result':'click';
  document.documentElement.dataset.pageMotion=motion;
  const after=()=>{if(screen==='result'&&capture){$('#result-bridge').classList.add('settled');resultField.setPaused(capture.state.paused);}};
@@ -58,11 +71,11 @@ $('#experience').addEventListener('click',e=>{if(!e.target.closest('button'))e.s
 function namespacedSvg(markup,prefix){return markup.replace(/\sid="([^"]+)"/g,(_,id)=>` id="${prefix}-${id}"`).replace(/url\(#([^)]*)\)/g,(_,id)=>`url(#${prefix}-${id})`);}
 function layers(config,condition=false){return ['default','hover','selected'].map(state=>{
  let x=0,y=0,scale=1;
- if(condition&&state!=='default'){scale=.75;x=state==='hover'?-4.5:0;if(config.id==='myopia'){x-=9;y-=9;}if(['snow','astigmatism','hemianopia'].includes(config.id)){x-=3;y-=3;}}
+ if(condition&&state!=='default'&&!config[state].startsWith('nov5/')){scale=.75;x=state==='hover'?-4.5:0;if(config.id==='myopia'){x-=9;y-=9;}if(['snow','astigmatism','hemianopia'].includes(config.id)){x-=3;y-=3;}}
  return `<span class="art-state ${state}" style="left:${x}px;top:${y}px"><span class="vector-scale" style="transform:scale(${scale})">${namespacedSvg(ControlArtwork[config[state]],config.id||'eye-control')}</span></span>`;
 }).join('');}
 function animateArtwork(button, click = false) {
-  const state = button.classList.contains('is-selected') ? 'selected' : button.classList.contains('is-hover') ? 'hover' : 'default';
+  const state = button.classList.contains('is-selected') ? 'selected' : (button.classList.contains('is-hover')||button.closest('.is-open')) ? 'hover' : 'default';
   const sourceState = button.dataset.artState || 'default';
   if (sourceState === state) return;
   const source = button.querySelector('.art-state.' + sourceState);
@@ -98,8 +111,16 @@ function hoverStates(button) {
   button.addEventListener('focus', () => hover(true));
   button.addEventListener('blur', () => hover(false));
 }
+// Filters use the same linear-RGB matrices as the live particle field.
+const colourDefs=document.createElementNS('http://www.w3.org/2000/svg','svg');colourDefs.setAttribute('class','optical-defs');colourDefs.setAttribute('aria-hidden','true');
+colourDefs.innerHTML='<defs>'+Object.entries(FieldMath.COLOUR_MATRICES).map(([key,rows])=>`<filter id="preview-${key}" color-interpolation-filters="linearRGB"><feColorMatrix type="matrix" values="${rows.map(row=>row.join(' ')+' 0 0').join(' ')} 0 0 0 1 0"/></filter>`).join('')+'</defs>';document.body.append(colourDefs);
 function updateConditions(){
- CONDITIONS.forEach(c=>{const b=$(`[data-condition="${c.id}"]`);b.classList.toggle('is-selected',selection.selected.has(c.id));b.setAttribute('aria-pressed',selection.selected.has(c.id));animateArtwork(b,true);const detail=$(`[data-detail-value="${c.id}"]`);if(detail)detail.textContent=selection.selected.has(c.id)?c.options.find(o=>o.value===selection.details[c.id]).label:'';});
+ CONDITIONS.forEach(c=>{
+  const b=$(`[data-condition="${c.id}"]`),selected=selection.selected.has(c.id);b.classList.toggle('is-selected',selected);b.setAttribute('aria-pressed',selected);
+  b.dataset.colour=selection.details.colour;b.dataset.hemisphere=selection.details.hemianopia;
+  if(c.id==='colour')b.style.setProperty('--vision-filter',`url(#preview-${selection.details.colour})`);
+  animateArtwork(b,true);const detail=$(`[data-detail-value="${c.id}"]`);if(detail)detail.textContent=selected?c.options.find(o=>o.value===selection.details[c.id]).label:'';
+ });
  field.setConditions(selection.selected);field.setDetails(selection.details);
  $('#field-conditions').replaceChildren(...selection.entries().map(c=>{const li=document.createElement('li');li.textContent=c.name+(c.detail?' — '+c.detail:'');return li;}));
  $('#particle-canvas').setAttribute('aria-label','Interactive particle field. '+selection.entries().map(c=>c.name+(c.detail?' '+c.detail:'')).join(', ')+'. Drag to rotate 360 degrees; scroll to move through the world.');
@@ -107,23 +128,35 @@ function updateConditions(){
 CONDITIONS.forEach(c=>{
  const card=document.createElement('div');card.className='condition-card';
  const b=document.createElement('button');b.className='condition';b.dataset.condition=c.id;b.setAttribute('aria-label',c.name);b.setAttribute('aria-pressed','false');
- b.innerHTML=`<span class="condition-art"><span class="condition-geometry">${layers(c,true)}</span></span><span class="condition-label">${c.name}</span>`;hoverStates(b);b.onclick=()=>{selection.toggle(c.id);updateConditions();};card.append(b);
- if(c.options){const arrow=document.createElement('button');arrow.className='condition-details-toggle';arrow.dataset.category=c.id;arrow.setAttribute('aria-label',c.name+' options');arrow.setAttribute('aria-haspopup','dialog');arrow.innerHTML='<img src="assets/nov4/option-arrow.svg" alt="">';arrow.onclick=()=>openDetails(c,arrow);const detail=document.createElement('span');detail.className='chosen-detail';detail.dataset.detailValue=c.id;card.append(arrow,detail);}
+ const optics=c.id==='astigmatism'?'<span class="preview-rays" aria-hidden="true"><i></i><i></i><i></i><i></i></span>':c.id==='hemianopia'?'<span class="hemi-shade left" aria-hidden="true"></span><span class="hemi-shade right" aria-hidden="true"></span><span class="hemi-shade side" aria-hidden="true"></span>':'';
+ b.innerHTML=`<span class="condition-art" aria-hidden="true"><span class="condition-geometry">${layers(c,true)}</span>${optics}</span><span class="condition-label">${c.name}</span>`;hoverStates(b);b.onclick=()=>{if(c.options)openDetails(c,card.querySelector('.condition-details-toggle'));else{closeDetails();selection.toggle(c.id);updateConditions();}};card.append(b);
+ if(c.options){const arrow=document.createElement('button');arrow.className='condition-details-toggle';arrow.dataset.category=c.id;arrow.setAttribute('aria-label',c.name+' options');arrow.setAttribute('aria-haspopup','dialog');arrow.setAttribute('aria-expanded','false');arrow.innerHTML='<img src="assets/nov4/option-arrow.svg" alt="">';arrow.onclick=()=>detailAnchor===arrow?closeDetails():openDetails(c,arrow);const detail=document.createElement('span');detail.className='chosen-detail';detail.dataset.detailValue=c.id;card.append(arrow,detail);}
  $('#condition-options').append(card);
 });
-function openDetails(c,anchor){
- const dialog=$('#condition-details');$('#detail-title').textContent=c.name;$('#detail-options').replaceChildren(...c.options.map(o=>{const label=document.createElement('label');const input=document.createElement('input');input.type='radio';input.name='condition-detail';input.value=o.value;input.checked=selection.details[c.id]===o.value;input.onchange=()=>{selection.setDetail(c.id,o.value);updateConditions();};label.append(input,document.createTextNode(o.label));return label;}));
- dialog.showModal();anchor.setAttribute('aria-expanded','true');const r=anchor.getBoundingClientRect();dialog.style.left=Math.max(16,Math.min(r.left-90,innerWidth-dialog.offsetWidth-16))+'px';dialog.style.top=Math.max(16,Math.min(r.bottom+12,innerHeight-dialog.offsetHeight-16))+'px';
+function closeDetails(restoreFocus=false){
+ const anchor=detailAnchor;if(!anchor)return;$('#condition-details').hidden=true;anchor.setAttribute('aria-expanded','false');anchor.closest('.condition-card').classList.remove('is-open');detailAnchor=null;animateArtwork(anchor.closest('.condition-card').querySelector('[data-condition]'));if(restoreFocus)anchor.focus({preventScroll:true});
 }
-$('#condition-details').addEventListener('close',()=>$$('.condition-details-toggle').forEach(b=>b.setAttribute('aria-expanded','false')));
-$('#detail-close').onclick=$('#detail-done').onclick=()=>$('#condition-details').close();
-$('#condition-details').addEventListener('click',e=>{if(e.target!==$('#condition-details'))return;const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();});
+function positionDetails(){
+ if(!detailAnchor)return;const dialog=$('#condition-details'),r=detailAnchor.getBoundingClientRect();
+ const left=innerWidth>700?r.right+10:r.left-dialog.offsetWidth/2;
+ dialog.style.left=Math.max(12,Math.min(left,innerWidth-dialog.offsetWidth-12))+'px';dialog.style.top=Math.max(12,Math.min(r.top-24,innerHeight-dialog.offsetHeight-12))+'px';
+}
+function openDetails(c,anchor){
+ closeDetails();detailAnchor=anchor;const dialog=$('#condition-details');dialog.setAttribute('aria-label',c.name+' options');anchor.setAttribute('aria-expanded','true');anchor.closest('.condition-card').classList.add('is-open');
+ $('#detail-options').replaceChildren(...c.options.map(o=>{const label=document.createElement('label'),input=document.createElement('input');input.type='radio';input.name='condition-detail';input.value=o.value;input.checked=selection.details[c.id]===o.value;input.onclick=()=>{selection.setDetail(c.id,o.value);updateConditions();closeDetails(true);};label.append(input,document.createTextNode(o.label));return label;}));
+ $('#detail-clear').hidden=!selection.selected.has(c.id);$('#detail-clear').onclick=()=>{selection.selected.delete(c.id);updateConditions();closeDetails(true);};dialog.hidden=false;positionDetails();
+ if(!reduceMotion.matches)dialog.animate([{opacity:0,transform:'translateX(-8px)'},{opacity:1,transform:'none'}],{duration:300,easing:'ease-in'});
+ $('#detail-options input:checked').focus({preventScroll:true});
+}
+addEventListener('resize',positionDetails);
+document.addEventListener('pointerdown',e=>{if(detailAnchor&&!e.target.closest('#condition-details,.is-open'))closeDetails();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(detailAnchor){e.preventDefault();closeDetails(true);}else if(screen==='detail')go('result');}});
 const display=[{id:'structure',name:'Structure',default:'b4f9d.svg',hover:'c72f5.svg',selected:'459a5.svg'},{id:'colors',name:'Colors',default:'c26e9.svg',hover:'c9691.svg',selected:'3e706.svg'},{id:'motion',name:'Motion',default:'821d9.svg',hover:'9a6a0.svg',selected:'29b56.svg'}];
-function updateControls(){display.forEach(c=>{const b=$(`[data-display="${c.id}"]`);b.classList.toggle('is-selected',controls[c.id]);b.setAttribute('aria-pressed',controls[c.id]);animateArtwork(b,true);});field.setControls(controls);}
+function updateControls(){display.forEach(c=>{const b=$(`[data-display="${c.id}"]`);b.classList.toggle('is-selected',controls[c.id]);b.setAttribute('aria-pressed',controls[c.id]);animateArtwork(b,true);});field.setControls(controls);field.setPaused(controls.motion);}
 function setHover(button,value){button.classList.toggle('is-hover',value);animateArtwork(button);}
-display.forEach(c=>{const group=document.createElement('div');group.className='display-choice';const b=document.createElement('button');b.className='variant-button display-button';b.dataset.display=c.id;b.setAttribute('aria-label',c.name);b.innerHTML=layers(c);hoverStates(b);b.onclick=()=>{controls[c.id]=!controls[c.id];updateControls();};if(c.id==='motion')b.title='Emphasize floating motion';const label=document.createElement('button');label.className='display-label';label.textContent=c.name;label.setAttribute('aria-label','Select '+c.name);label.onclick=()=>b.click();['pointerenter','focus'].forEach(type=>label.addEventListener(type,()=>setHover(b,true)));['pointerleave','blur'].forEach(type=>label.addEventListener(type,()=>setHover(b,false)));group.append(b,label);$('#display-options').append(group);});
+display.forEach(c=>{const group=document.createElement('div');group.className='display-choice';const b=document.createElement('button');b.className='variant-button display-button';b.dataset.display=c.id;b.setAttribute('aria-label',c.name);b.innerHTML=layers(c);hoverStates(b);b.onclick=()=>{controls[c.id]=!controls[c.id];updateControls();};if(c.id==='motion')b.title='Pause or resume particle motion';const label=document.createElement('button');label.className='display-label';label.textContent=c.name;label.setAttribute('aria-label','Select '+c.name);label.onclick=()=>b.click();['pointerenter','focus'].forEach(type=>label.addEventListener(type,()=>setHover(b,true)));['pointerleave','blur'].forEach(type=>label.addEventListener(type,()=>setHover(b,false)));group.append(b,label);$('#display-options').append(group);});
 const eyeButton=$('.eye-control');eyeButton.innerHTML=layers({id:'eye-control',default:eyeButton.dataset.default,hover:eyeButton.dataset.hover,selected:eyeButton.dataset.selected});hoverStates(eyeButton);
-function resetExperience(){revision++;selection.reset();Object.assign(controls,{structure:false,colors:false,motion:false});capture=null;comparing=null;capturing=false;cancelCrop();field.reset();resultField.reset();$$('.is-hover').forEach(b=>b.classList.remove('is-hover'));updateConditions();updateControls();$('#result-symptoms').replaceChildren();$('#result-bridge').removeAttribute('src');}
+function resetExperience(){closeDetails();revision++;selection.reset();Object.assign(controls,{structure:false,colors:false,motion:false});capture=null;comparing=null;capturing=false;cancelCrop();field.reset();resultField.reset();$$('.is-hover').forEach(b=>b.classList.remove('is-hover'));updateConditions();updateControls();$('#result-symptoms').replaceChildren();$('#result-bridge').removeAttribute('src');}
 
 function fieldBounds(){const r=$('.blue-panel').getBoundingClientRect();return{width:r.width,height:r.height};}
 function paintCrop(){if(!cropRect)return;Object.assign($('#crop-frame').style,{left:cropRect.x+'px',top:cropRect.y+'px',width:cropRect.width+'px',height:cropRect.height+'px'});$('#crop-frame').setAttribute('aria-label',`Crop selection, ${Math.round(cropRect.width)} by ${Math.round(cropRect.height)}. Drag to move. Shift and arrow keys resize.`);}
@@ -143,10 +176,22 @@ async function captureSelection(){
  resultField.restoreState(state,cropLens(bounds.width,bounds.height,rect));resultField.setPaused(true);renderSymptoms();field.setPaused(true);await go('result');capturing=false;
 }
 function renderSymptoms(){
- const list=$('#result-symptoms');list.classList.toggle('single',capture.entries.length===1);list.replaceChildren(...capture.entries.map((c,i)=>{const b=document.createElement('button');b.className='result-symptom '+(i%2?'above':'below');b.dataset.symptom=c.id;b.setAttribute('aria-pressed',comparing===c.id);b.setAttribute('aria-label',c.name+(c.detail?' — '+c.detail:''));b.innerHTML='<span class="symptom-dot" aria-hidden="true"></span><span class="symptom-label"></span>';b.querySelector('.symptom-label').textContent=c.name;if(c.detail){const small=document.createElement('span');small.className='symptom-subtype';small.textContent=c.detail;b.querySelector('.symptom-label').append(small);}b.title=c.detail||c.name;b.onclick=()=>compareSymptom(comparing===c.id?null:c.id);return b;}));
+ const list=$('#result-symptoms');list.classList.toggle('single',capture.entries.length===1);
+ list.replaceChildren(...capture.entries.map((c,i)=>{
+  const b=document.createElement('button');b.className='result-symptom '+(i%2?'above':'below')+(comparing===c.id?' is-explained':'');b.dataset.symptom=c.id;
+  b.setAttribute('aria-label',c.name+(c.detail?' — '+c.detail:''));b.setAttribute('aria-expanded',screen==='detail'&&comparing===c.id);b.innerHTML='<span class="symptom-dot" aria-hidden="true"></span><span class="symptom-label"></span>';b.querySelector('.symptom-label').textContent=c.name;
+  if(c.detail){const small=document.createElement('span');small.className='symptom-subtype';small.textContent=c.detail;b.querySelector('.symptom-label').append(small);}b.title=c.detail||c.name;
+  b.onclick=()=>screen==='detail'?go('result'):openExplanation(c.id);return b;
+ }));
 }
-function compareSymptom(id){comparing=id;resultField.setConditions(id?[id]:capture.entries.map(c=>c.id));resultField.setDetails(capture.details);renderSymptoms();$('#result-announcement').textContent=id?capture.entries.find(c=>c.id===id).name+' perspective':'Combined selected conditions';}
-$('#result-canvas').addEventListener('click',()=>{if(!capture||resultField.lastGestureMoved)return;if(capture.entries.length===1){resultField.target.yaw+=Math.PI/6;resultField.updateRotation();resultField.request();}else{const index=capture.entries.findIndex(c=>c.id===comparing);compareSymptom(index+1<capture.entries.length?capture.entries[index+1].id:null);}});
+async function openExplanation(id){
+ if(!capture||!capture.entries.some(c=>c.id===id))return;
+ comparing=id;$('#condition-overview').textContent=ConditionNotes[id].overview;$('#condition-interpretation').textContent=ConditionNotes[id].interpretation;
+ $$('[data-symptom]').forEach(b=>b.classList.toggle('is-explained',b.dataset.symptom===id));
+ await go('detail');$(`[data-symptom="${id}"]`).setAttribute('aria-expanded','true');
+ $('#result-announcement').textContent=CONDITIONS.find(c=>c.id===id).name+' — ways of seeing';
+}
+$('#result-canvas').addEventListener('click',()=>{if(!capture||resultField.lastGestureMoved||screen!=='result')return;resultField.target.yaw+=Math.PI/6;resultField.updateRotation();resultField.request();});
 updateControls();
 // Eye movement is computed from the actual responsive element bounds.
 const eyes = $$('[data-eye]').map(el => ({ el, pupil: el.querySelector('.pupil'), x: 0, y: 0, tx: 0, ty: 0 })); let eyeRAF = 0;
@@ -178,3 +223,8 @@ addEventListener('pointermove', event => {
 document.documentElement.addEventListener('pointerleave', resetEyes); addEventListener('blur', resetEyes);
 addEventListener('pagehide', () => { field.stop(); resultField.stop(); if (eyeRAF) cancelAnimationFrame(eyeRAF); });
 go(location.hash.slice(1)||'home',true,true);
+
+let anatomyRAF=0,anatomyX=0,anatomyY=0,anatomyTX=0,anatomyTY=0;
+function animateAnatomy(){anatomyRAF=0;const ease=reduceMotion.matches?1:.16;anatomyX+=(anatomyTX-anatomyX)*ease;anatomyY+=(anatomyTY-anatomyY)*ease;$('.eye-optics').style.transform=`translate(${anatomyX}px,${anatomyY}px)`;if(Math.abs(anatomyX-anatomyTX)+Math.abs(anatomyY-anatomyTY)>.05)anatomyRAF=requestAnimationFrame(animateAnatomy);}
+addEventListener('pointermove',e=>{if((screen!=='result'&&screen!=='detail')||e.pointerType==='touch')return;const r=$('.eye-optics').getBoundingClientRect();anatomyTX=Math.max(-10,Math.min(10,(e.clientX-r.left-r.width/2)*.025));anatomyTY=Math.max(-18,Math.min(18,(e.clientY-r.top-r.height/2)*.045));if(!anatomyRAF)anatomyRAF=requestAnimationFrame(animateAnatomy);},{passive:true});
+addEventListener('blur',()=>{anatomyTX=anatomyTY=0;if(!anatomyRAF)anatomyRAF=requestAnimationFrame(animateAnatomy);});

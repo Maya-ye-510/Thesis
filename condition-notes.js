@@ -1,0 +1,12 @@
+/* Short explanatory copy; sources and the artistic scope are documented in README.md. */
+(function(root){
+ const notes={
+  normal:{overview:'A clear view can feel immediate and complete. Yet attention still selects which details become important: a colour, a contour, a movement, or a familiar pattern.',interpretation:'The scene is shared, but its meaning is assembled by the viewer. Which elements did you notice first, and which would you remember without looking again?'},
+  myopia:{overview:'Myopia, or nearsightedness, makes distant objects appear blurry while nearby objects can remain clear. Light focuses in front of the retina rather than directly on it.',interpretation:'In this world, distant circles lose their edges. Moving closer restores detail in those same circles. Your memory of the scene may depend on where you stood and which objects you approached.'},
+  colour:{overview:'Colour vision differences affect how some colours can be distinguished. Red–green and blue–yellow differences do not change every colour in the same way.',interpretation:'Your selected colour setting changes which circles stand apart and which seem related. When colour becomes a less reliable cue, shape, brightness and position can take on a different importance.'},
+  astigmatism:{overview:'Astigmatism can blur or distort vision when the cornea or lens has an uneven shape. Light does not focus evenly onto the retina.',interpretation:'Here, points of light spread into rays and faint repeated edges. A circle becomes a luminous trace. Would you remember its original outline, or the light extending beyond it?'},
+  snow:{overview:'Visual snow is experienced as persistent visual static: small flickering dots across the visual field. Afterimages and other visual disturbances can also occur.',interpretation:'This scene adds floating dust and a short visual echo. Present and recent impressions overlap. Which layer would become your memory: the object, the noise, or the trace it leaves behind?'},
+  hemianopia:{overview:'Hemianopia describes loss of one half of the visual field. The selected left or right view explores that absence. The side setting is a central-window study, leaving only the middle visible.',interpretation:'Black areas mark information withheld in this artwork; the luminous edge lets fragments remain. How much of the missing world do you infer from what is still visible, and how much do you reconstruct?'}
+ };
+ root.ConditionNotes=notes;if(typeof module!=='undefined'&&module.exports)module.exports=notes;
+})(globalThis);

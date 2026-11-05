@@ -67,3 +67,10 @@ test('Deuteranopia colour transform preserves neutral colours and returns bounde
   assert.notEqual(deutanColour('#ff7049'), '#ff7049');
   for (const colour of ['#dcff5c', '#71efdf', '#ff7049', '#8e9cfb']) assert.match(deutanColour(colour), /^#[0-9a-f]{6}$/);
 });
+
+test('Visual-field modes preserve the requested half or central region', () => {
+  const {visibleField}=require('../field-math.js');
+  assert.deepEqual(visibleField(1000,'left'),[500,1000]);
+  assert.deepEqual(visibleField(1000,'right'),[0,500]);
+  assert.deepEqual(visibleField(1000,'side'),[340,660]);
+});

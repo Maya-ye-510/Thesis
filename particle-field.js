@@ -1,8 +1,8 @@
 /* An immersive repeating space, rendered with cached native Canvas 2D sprites. */
 (function (root) {
   'use strict';
-  const { clamp, project, focusZoom, blurAt, visionColour } = root.FieldMath;
-  const palette = ['#dfff33', '#63e6e2', '#ff563b', '#a65aff', '#fff064', '#20d8ff', '#101a48', '#ff48cf'];
+  const { clamp, project, focusZoom, blurAt, visionColour, visibleField } = root.FieldMath;
+  const palette = ['#edff38', '#63e6e2', '#ff563b', '#a65aff', '#fff064', '#20d8ff', '#ff9c38', '#ff48cf', '#21ed81', '#ff3434', '#59b3ff', '#f4fff1'];
   class ParticleField {
     constructor(canvas, onDepth) {
       this.canvas = canvas; this.ctx = canvas.getContext('2d', { alpha: false }); this.onDepth = onDepth;
@@ -38,7 +38,7 @@
         radius: i % 29 === 0 ? 25 + rand() * 17 : i % 5 === 0 ? 10 + rand() * 13 : 2 + rand() ** 2 * 10,
         color: Math.floor(rand() * palette.length),
         type: i % 43 === 0 ? 'triangle' : i % 61 === 0 ? 'line' : circles[i % circles.length],
-        rotation: rand() * Math.PI * 2, phase: rand() * Math.PI * 2, speed: .18 + rand() * .26
+        rotation: rand() * Math.PI * 2, phase: rand() * Math.PI * 2, speed: .24 + rand() * .32
       }));
       this.dust = Array.from({ length: 70 }, () => ({ x: rand(), y: rand(), radius: .7 + rand() ** 3 * 6, phase: rand() * Math.PI * 2, speed: .01 + rand() * .02 }));
     }
@@ -130,11 +130,21 @@
     }
     stop() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; this.last = 0; }
     request() { if (this.active && !document.hidden && !this.raf) this.raf = requestAnimationFrame(t => this.frame(t)); }
-    sprite(type, color, blur) {
-      const bucket = Math.round(Math.min(blur, 16) / 2) * 2, key = type + color + bucket;
+    sprite(type, color, blur, astigmatism = false) {
+      const bucket = Math.round(Math.min(blur, 16) / 2) * 2, key = type + color + bucket + (astigmatism ? ':rays' : '');
       if (this.sprites.has(key)) return this.sprites.get(key);
       const sprite = document.createElement('canvas'); sprite.width = sprite.height = 160;
       const ctx = sprite.getContext('2d'); ctx.translate(80, 80); ctx.fillStyle = color; ctx.strokeStyle = color; ctx.lineWidth = 3;
+      if (astigmatism) {
+        ctx.save(); ctx.shadowColor = color; ctx.shadowBlur = 7;
+        for (const [angle,length] of [[0,77],[Math.PI/2,66],[Math.PI/4,54],[-Math.PI/4,54]]) {
+          ctx.save(); ctx.rotate(angle);
+          const ray=ctx.createLinearGradient(-length,0,length,0);
+          ray.addColorStop(0,color+'00'); ray.addColorStop(.35,color+'55'); ray.addColorStop(.5,color+'dd'); ray.addColorStop(.65,color+'55'); ray.addColorStop(1,color+'00');
+          ctx.strokeStyle=ray; ctx.lineWidth=2.8; ctx.beginPath(); ctx.moveTo(-length,0); ctx.lineTo(length,0); ctx.stroke(); ctx.restore();
+        }
+        ctx.restore();
+      }
       if (bucket) ctx.filter = `blur(${bucket}px)`;
       ctx.beginPath();
       if (type === 'triangle') { ctx.moveTo(0, -32); ctx.lineTo(34, 29); ctx.lineTo(-34, 29); ctx.closePath(); ctx.stroke(); }
@@ -155,7 +165,7 @@
       if (!this.active || !this.width || document.hidden) return;
       const dt = this.last ? Math.min((timestamp - this.last) / 1000, .05) : 0; this.last = timestamp;
       const animate = !this.paused && !this.reduced.matches;
-      if (animate) this.time += dt * (this.controls.motion ? 1.85 : 1);
+      if (animate) this.time += dt;
       const easing = this.reduced.matches ? 1 : .12;
       for (const key of ['yaw', 'pitch', 'zoom']) this.camera[key] += (this.target[key] - this.camera[key]) * easing;
       const unsettled = Object.keys(this.target).some(k => Math.abs(this.target[k] - this.camera[k]) > .001);
@@ -177,12 +187,30 @@
       else ctx.drawImage(this.scene, 0, 0, w, h);
       this.canvas.dataset.snowDelay = snow && !this.reduced.matches ? '130' : '0';
       if (snow) this.drawDust(ctx);
-      if (this.conditions.has('hemianopia')) {
-        const middle = l ? w * l.centerX : w / 2, left = this.details.hemianopia !== 'right';
-        ctx.fillStyle = '#10277de8';
-        if (left) ctx.fillRect(0, 0, clamp(middle, 0, w), h); else ctx.fillRect(clamp(middle, 0, w), 0, Math.max(0, w - middle), h);
+      if (this.conditions.has('hemianopia')) this.drawFieldLoss(ctx);
+    }
+    drawFieldLoss(ctx) {
+      const l=this.lens, scale=l?this.width*l.sizeRatio:1, sourceW=l?l.sourceWidth:this.width;
+      const [start,end]=visibleField(sourceW,this.details.hemianopia), offset=l?l.crop.x:0;
+      const edges=[]; if(start>0)edges.push({x:(start-offset)*scale,left:true}); if(end<sourceW)edges.push({x:(end-offset)*scale,left:false});
+      const w=this.width,h=this.height,soft=18*scale;
+      for(const edge of edges){
+        const x=edge.x, from=edge.left?x-soft:x+soft, to=edge.left?x+soft:x-soft;
+        ctx.fillStyle='#000';
+        if(edge.left)ctx.fillRect(0,0,clamp(x-soft,0,w),h);else ctx.fillRect(clamp(x+soft,0,w),0,Math.max(0,w-x-soft),h);
+        const fade=ctx.createLinearGradient(from,0,to,0);fade.addColorStop(0,'#000');fade.addColorStop(.45,'#000');fade.addColorStop(1,'#0000');
+        ctx.fillStyle=fade;ctx.fillRect(x-soft,0,soft*2,h);
+        if(x < -soft || x > w+soft)continue;
+        ctx.save();ctx.beginPath();ctx.rect(x-soft*.4,0,soft*2,h);ctx.clip();
+        ctx.shadowBlur=18*scale;ctx.shadowColor='#73ffbf';ctx.strokeStyle='#8bffe1';ctx.lineWidth=1.8*scale;ctx.globalAlpha=.5;
+        for(let i=0;i<9;i++){
+          const y=(i+.5)/9*h+Math.sin(this.time*.3+i)*12*scale, r=(6+(i%3)*4)*scale;
+          ctx.beginPath();ctx.arc(x+(edge.left?1:-1)*Math.sin(i*1.7+this.time*.12)*7*scale,y,r,0,Math.PI*2);ctx.stroke();
+        }
+        ctx.restore();
       }
     }
+
     drawParticles(ctx) {
       const w = this.width, h = this.height, myopia = this.conditions.has('myopia'), colour = this.conditions.has('colour');
       const points = [], count = this.particleLimit || (w < 600 ? 2200 : this.particles.length), camera = { ...this.camera, lens: this.lens };
@@ -214,14 +242,14 @@
         const blur = blurAt(pos.distance, myopia) * opticalScale;
         const type = this.controls.structure && p.type === 'disc' && p.radius > 15 ? 'ring' : p.type;
         // Convert optical blur in screen pixels into sprite pixels before caching.
-        const sprite = this.sprite(type, color, blur * 160 / Math.max(12, box));
+        const sprite = this.sprite(type, color, blur * 160 / Math.max(12, box), this.conditions.has('astigmatism') && p.radius > 6);
         const nearFade = clamp((pos.viewZ - .8) / .8, 0, 1), fog = clamp((17.5 - pos.distance) / 4.5, 0, 1);
         ctx.globalAlpha = (.95 - pos.depth * .38) * nearFade * fog;
         ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate(p.rotation + this.camera.yaw + this.time * p.speed * .06);
         ctx.drawImage(sprite, -box / 2, -box / 2, box, box); ctx.restore();
         if (this.conditions.has('astigmatism')) {
-          const alpha = ctx.globalAlpha; ctx.globalAlpha = alpha * .22;
-          ctx.drawImage(sprite, pos.x - box / 2 + 4 * opticalScale, pos.y - box / 2 - 2 * opticalScale, box, box);
+          const alpha = ctx.globalAlpha; ctx.globalAlpha = alpha * .28;
+          ctx.drawImage(sprite, pos.x - box / 2 + 7 * opticalScale, pos.y - box / 2 - 3 * opticalScale, box, box);
           ctx.globalAlpha = alpha;
         }
       }
@@ -258,5 +286,6 @@
       ctx.globalAlpha = 1;
     }
   }
+  ParticleField.palette = Object.freeze(palette);
   root.ParticleField = ParticleField;
 })(globalThis);
