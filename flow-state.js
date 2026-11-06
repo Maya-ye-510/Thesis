@@ -6,7 +6,7 @@
     {id:'myopia',name:'Myopia',default:'nov4/myopia.svg',hover:'95338.svg',selected:'65769.svg'},
     {id:'colour',name:'Color Blind',default:'nov4/colour.svg',hover:'nov5/colour-hover.svg',selected:'nov5/colour-selected.svg',options:[{value:'deutan',label:'Red–green · Deuteranopia'},{value:'protan',label:'Red–green · Protanopia'},{value:'tritan',label:'Blue–yellow'},{value:'weak',label:'Color weakness'}]},
     {id:'astigmatism',name:'Astigmatism',default:'nov4/snow.svg',hover:'nov5/astigmatism-hover.svg',selected:'nov5/astigmatism-selected.svg'},
-    {id:'snow',name:'Vision Snow',default:'nov4/snow.svg',hover:'59035.svg',selected:'3d3a2.svg'},
+    {id:'snow',name:'Visual Snow',default:'nov4/snow.svg',hover:'59035.svg',selected:'3d3a2.svg'},
     {id:'hemianopia',name:'Hemianopia',default:'nov4/snow.svg',hover:'nov5/hemianopia-hover.svg',selected:'nov5/hemianopia-selected.svg',options:[{value:'left',label:'Left visual field'},{value:'right',label:'Right visual field'},{value:'side',label:'Side · central view'}]}
   ];
   class ConditionSelection{

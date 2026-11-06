@@ -1,7 +1,7 @@
 /* An immersive repeating space, rendered with cached native Canvas 2D sprites. */
 (function (root) {
   'use strict';
-  const { clamp, project, focusZoom, blurAt, visionColour, visibleField, fieldBoundary } = root.FieldMath;
+  const { clamp, project, focusZoom, blurAt, visionColour, visibleField, fieldBoundary, snowSeed, snowPixels, floaterPosition } = root.FieldMath;
   const palette = ['#edff38', '#63e6e2', '#ff563b', '#a65aff', '#fff064', '#20d8ff', '#ff9c38', '#ff48cf', '#21ed81', '#ff3434', '#59b3ff', '#f4fff1'];
   const colourWeights=[.12,.14,.03,.02,.16,.12,.02,.23,.02,.02,.1,.02];
   const primaryColours=[0,1,4,5,7,10],accentColours=[2,3,6,8,9,11];
@@ -16,6 +16,7 @@
       this.reduced = matchMedia('(prefers-reduced-motion: reduce)');
       this.active = false; this.time = 0; this.raf = 0; this.last = 0; this.width = this.height = 0; this.drag = null;
       this.sprites = new Map(); this.history = []; this.historyUntil = 0;
+      this.snowTime=0;this.freezePerception=false;this.snowGaze={x:0,y:0,yaw:0,pitch:0};this.frozenSnow=null;this.grainSeed=null;this.grainTile=null;
       this.scene = document.createElement('canvas'); this.sceneCtx = this.scene.getContext('2d');
       this.build();
       this.observer = new ResizeObserver(() => this.resize()); this.observer.observe(canvas.parentElement);
@@ -43,7 +44,7 @@
         type: i % 43 === 0 ? 'triangle' : i % 61 === 0 ? 'line' : circles[i % circles.length],
         rotation: rand() * Math.PI * 2, phase: rand() * Math.PI * 2, speed: .24 + rand() * .32
       }));
-      this.dust = Array.from({ length: 70 }, () => ({ x: rand(), y: rand(), radius: .7 + rand() ** 3 * 6, phase: rand() * Math.PI * 2, speed: .01 + rand() * .02 }));
+      this.dust = Array.from({ length: 80 }, (_,i) => ({ x: rand(), y: rand(), radius: .9 + rand() ** 2 * 4.8, phase: rand() * Math.PI * 2, speed: .2 + rand() * .5, vx:(rand()-.5)*.018,vy:(rand()-.5)*.016,type:[0,3,1,4,3,2,4,3][i%8] }));
     }
     resize() {
       const rect = this.canvas.parentElement.getBoundingClientRect();
@@ -68,16 +69,17 @@
     liveState() {
       return { camera: { ...this.camera }, target: { ...this.target }, time: this.time || 0, focus: this.focus,
         conditions: [...(this.conditions || [])], details: { ...this.details }, controls: { ...this.controls }, paused: !!this.paused,
-        particleLimit: this.particleLimit || (this.width < 600 ? 2200 : 5400), lens: this.lens || null };
+        particleLimit: this.particleLimit || (this.width < 600 ? 2200 : 5400), lens: this.lens || null, snowTime:this.snowTime??this.time, snowGaze:{...this.snowGaze} };
     }
     captureState() {
-      const state = this.conditions.has('snow') && !this.reduced.matches && this.lastPresentedState ? this.lastPresentedState : this.liveState();
-      return { ...state, camera: { ...state.camera }, target: { ...state.camera }, conditions: [...this.conditions], details: { ...this.details }, controls: { ...this.controls }, paused: this.paused };
+      const state = this.conditions.has('snow') && !this.reduced.matches && !this.paused && this.lastPresentedState ? this.lastPresentedState : this.liveState();
+      return { ...state, camera: { ...state.camera }, target: { ...state.camera }, conditions: [...this.conditions], details: { ...this.details }, controls: { ...this.controls }, paused: this.paused, snowGaze:{...state.snowGaze},snowView:{time:this.snowTime??this.time,camera:{...this.camera},gaze:{...this.snowGaze}} };
     }
     restoreState(state, lens = null) {
       this.camera = { ...state.camera }; this.target = { ...state.camera }; this.originPose = { ...state.camera };
-      this.time = state.time; this.focus = state.focus; this.particleLimit = state.particleLimit;
+      this.time = state.time;this.snowTime=state.snowTime??state.snowView?.time??state.time; this.focus = state.focus; this.particleLimit = state.particleLimit;
       this.lens = lens; this.lastPresentedState = null; this.history = [];
+      this.snowGaze={x:0,y:0,yaw:state.camera.yaw,pitch:state.camera.pitch,...state.snowGaze};this.frozenSnow=this.freezePerception&&state.snowView?state.snowView:null;
       this.setConditions(state.conditions); this.setDetails(state.details); this.setControls(state.controls); this.setPaused(state.paused);
       this.updateRotation(); this.canvas.dataset.focus = this.focus.toFixed(3);
     }
@@ -85,7 +87,7 @@
       if (Object.keys(controls).some(key => controls[key] !== this.controls[key])) this.historyUntil = performance.now() + 320;
       Object.assign(this.controls, controls); this.request();
     }
-    setPaused(value) { this.paused = value; this.request(); }
+    setPaused(value) { this.paused = value; if(value)this.historyUntil=0;this.request(); }
     setFocus(value) {
       this.focus = clamp(value, 0, 1); this.target.zoom = focusZoom(this.focus);
       this.canvas.dataset.focus = this.focus.toFixed(3); this.onDepth?.(this.focus); this.request();
@@ -128,6 +130,7 @@
       this.drag = null; this.camera = { yaw: 0, pitch: 0, zoom: 0 }; this.target = { ...this.camera };
       this.time = 0; this.last = 0; this.history = []; this.historyUntil = 0; this.paused = false;
       this.lens = null; this.particleLimit = 0; this.lastPresentedState = null;
+      this.snowTime=0;this.snowGaze={x:0,y:0,yaw:0,pitch:0};this.frozenSnow=null;
       this.conditions.clear(); this.sprites.clear(); this.controls = { structure: false, colors: false, motion: false };
       this.updateRotation(); this.setFocus(.35);
     }
@@ -176,13 +179,21 @@
       const dt = this.last ? Math.min((timestamp - this.last) / 1000, .05) : 0; this.last = timestamp;
       const animate = !this.paused && !this.reduced.matches;
       if (animate) this.time += dt;
+      const animateSnow=this.conditions.has('snow')&&!this.reduced.matches&&!this.freezePerception;
+      if(animateSnow)this.snowTime=(this.snowTime??0)+dt;
       const easing = this.reduced.matches ? 1 : .12;
       for (const key of ['yaw', 'pitch', 'zoom']) this.camera[key] += (this.target[key] - this.camera[key]) * easing;
       const unsettled = Object.keys(this.target).some(k => Math.abs(this.target[k] - this.camera[k]) > .001);
+      if(this.conditions.has('snow')&&(animateSnow||unsettled)){
+        this.frozenSnow=null;const gaze=this.snowGaze||(this.snowGaze={x:0,y:0,yaw:this.camera.yaw,pitch:this.camera.pitch});
+        const decay=Math.exp(-Math.max(dt,.016)*2.6);
+        gaze.x=gaze.x*decay+(this.camera.yaw-gaze.yaw)*.095;gaze.y=gaze.y*decay+(this.camera.pitch-gaze.pitch)*.12;
+        gaze.yaw=this.camera.yaw;gaze.pitch=this.camera.pitch;
+      }
       if (animate || unsettled) this.historyUntil = timestamp + 320;
       this.draw(timestamp);
       this.canvas.dataset.motion = animate ? 'running' : 'paused';
-      if (animate || unsettled || (this.conditions.has('snow') && !this.reduced.matches && timestamp < this.historyUntil)) this.request();
+      if (animate || animateSnow || unsettled || (this.conditions.has('snow') && !this.reduced.matches && timestamp < this.historyUntil)) this.request();
     }
     draw(timestamp) {
       const ctx = this.ctx, w = this.width, h = this.height, snow = this.conditions.has('snow');
@@ -193,9 +204,9 @@
       glow.addColorStop(0, '#537cf0'); glow.addColorStop(.43, '#294ad1'); glow.addColorStop(1, '#152bac');
       ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
       this.sceneCtx.clearRect(0, 0, w, h); this.drawParticles(this.sceneCtx);
-      if (snow && !this.reduced.matches) this.drawDelayed(timestamp);
+      if (snow && !this.reduced.matches && !this.paused) this.drawDelayed(timestamp);
       else ctx.drawImage(this.scene, 0, 0, w, h);
-      this.canvas.dataset.snowDelay = snow && !this.reduced.matches ? '130' : '0';
+      this.canvas.dataset.snowDelay = snow && !this.reduced.matches && !this.paused ? '130' : '0';
       if (snow) this.drawDust(ctx);
       if (this.conditions.has('hemianopia')) this.drawFieldLoss(ctx);
     }
@@ -287,22 +298,32 @@
       this.ctx.globalAlpha = 1; this.ctx.drawImage(delayed.canvas, 0, 0, w, h);
       this.lastPresentedState = delayed.state;
     }
-    drawDust(ctx) {
-      const l = this.lens, w = l ? l.sourceWidth : this.width, h = l ? l.sourceHeight : this.height, scale = l ? this.width * l.sizeRatio : 1;
-      const count = w < 600 ? 35 : this.dust.length;
-      const dust = this.sprite('disc', '#d4d7de', 8);
-      for (let i = 0; i < count; i++) {
-        const p = this.dust[i];
-        const x = (((p.x + this.time * p.speed * .09 + Math.sin(this.time * .25 + p.phase) * .025 - this.camera.yaw * .012) % 1 + 1) % 1 * w - (l ? l.crop.x : 0)) * scale;
-        const y = (((p.y - this.time * p.speed * .06 + Math.cos(this.time * .2 + p.phase) * .035 - this.camera.pitch * .02) % 1 + 1) % 1 * h - (l ? l.crop.y : 0)) * scale;
-        const r = p.radius * scale;
-        ctx.globalAlpha = .12 + (i % 3) * .055; ctx.drawImage(dust, x - r * 2, y - r * 2, r * 4, r * 4);
-      }
-      ctx.fillStyle = '#e6e8ed'; ctx.globalAlpha = .2;
-      const seed = Math.floor(this.time * 9);
-      for (let i = 0; i < 450; i++) ctx.fillRect((((i * 137.508 + seed * 13) % 1000) / 1000 * w - (l ? l.crop.x : 0)) * scale, (((i * 73.18 + seed * 7) % 997) / 997 * h - (l ? l.crop.y : 0)) * scale, scale, scale);
-      ctx.globalAlpha = 1;
+    floaterSprite(type){
+      const key='floater:'+type;if(this.sprites.has(key))return this.sprites.get(key);
+      const canvas=document.createElement('canvas');canvas.width=canvas.height=96;const c=canvas.getContext('2d');c.translate(48,48);c.filter='blur(.65px)';
+      c.lineWidth=2;c.strokeStyle='#17252b99';c.fillStyle='#24343b77';
+      if(type===0){c.beginPath();c.ellipse(0,0,16,12,-.4,0,Math.PI*2);c.stroke();c.strokeStyle='#dce3e355';c.lineWidth=1;c.beginPath();c.ellipse(1,0,14,10,-.4,0,Math.PI*2);c.stroke();}
+      else if(type===1){c.beginPath();c.moveTo(-27,14);c.bezierCurveTo(-16,-23,2,21,10,-12);c.bezierCurveTo(16,-30,29,2,20,20);c.stroke();c.globalAlpha=.35;c.translate(3,2);c.stroke();}
+      else if(type===2){c.filter='blur(2px)';c.beginPath();c.ellipse(0,0,7,11,.35,0,Math.PI*2);c.fill();}
+      else if(type===3){c.filter='blur(.8px)';c.fillStyle='#dfeaf01a';c.strokeStyle='#f3fbfc66';c.lineWidth=1.4;c.beginPath();c.ellipse(0,0,21,15,.3,0,Math.PI*2);c.fill();c.stroke();c.strokeStyle='#25354633';c.beginPath();c.ellipse(1,1,18,12,.3,0,Math.PI*2);c.stroke();}
+      else{c.filter='blur(1.2px)';c.strokeStyle='#eef7fa66';c.lineWidth=3;c.shadowColor='#0e263b55';c.shadowBlur=3;c.beginPath();c.moveTo(-30,11);c.bezierCurveTo(-12,-22,0,24,12,-10);c.bezierCurveTo(20,-30,32,-1,20,23);c.stroke();}
+      this.sprites.set(key,canvas);return canvas;
     }
+    drawDust(ctx) {
+      const l=this.lens,w=l?l.sourceWidth:this.width,h=l?l.sourceHeight:this.height,scale=l?this.width*l.sizeRatio:1;
+      const view=this.frozenSnow,time=view?view.time:(this.snowTime??this.time),camera=view?view.camera:this.camera,gaze=view?view.gaze:(this.snowGaze||{x:0,y:0});
+      const count=w<600?48:this.dust.length;
+      for(let i=0;i<count;i++){
+        const p=this.dust[i],pos=floaterPosition(p,time,gaze,camera),x=(pos.x*w-(l?l.crop.x:0))*scale,y=(pos.y*h-(l?l.crop.y:0))*scale,box=p.radius*9*scale*(p.type>=3?1.65:1);
+        ctx.globalAlpha=.68+(i%3)*.1;ctx.drawImage(this.floaterSprite(p.type),x-box/2,y-box/2,box,box);
+      }
+      const seed=snowSeed(time,camera.yaw,camera.pitch);
+      if(!this.grainTile)this.grainTile=document.createElement('canvas');
+      if(this.grainSeed!==seed){this.grainTile.width=this.grainTile.height=128;const tile=this.grainTile.getContext('2d'),pixels=tile.createImageData(128,128);pixels.data.set(snowPixels(seed));tile.putImageData(pixels,0,0);this.grainSeed=seed;}
+      ctx.save();ctx.globalAlpha=1;ctx.translate(-(l?l.crop.x:0)*scale,-(l?l.crop.y:0)*scale);ctx.scale(scale,scale);ctx.fillStyle=ctx.createPattern(this.grainTile,'repeat');ctx.fillRect(0,0,w,h);ctx.restore();
+      ctx.globalAlpha=1;this.canvas.dataset.snowGrain=String(seed);
+    }
+
   }
   ParticleField.palette = Object.freeze(palette);
   ParticleField.primaryColours = Object.freeze(primaryColours);

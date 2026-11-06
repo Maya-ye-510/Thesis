@@ -4,6 +4,7 @@ const {CONDITIONS,ConditionSelection,initialCrop,moveCrop,resizeCrop,cropLens}=S
 const selection=new ConditionSelection();
 const controls={structure:false,colors:false,motion:false};
 const artAnimations=new WeakMap();
+let focusProgress=0,focusRAF=0,textEntrances=[],anatomyRAF=0,anatomyAngle=0,anatomyTarget=0;
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 let screen='home',transition=null,cropping=false,cropRect=null,cropDrag=null,capture=null,comparing=null,capturing=false,revision=0,detailAnchor=null;
 const homeCenter=document.createElement('div');homeCenter.className='home-center';$('#home').append(homeCenter);homeCenter.append($('#enter'),$('.eye-small'));
@@ -11,7 +12,7 @@ const homeBackground=document.createElement('div');homeBackground.className='hom
 $$('#home img[data-node-id="167:157"],#home img[data-node-id="167:156"]').forEach((el,i)=>{el.className='home-cross '+(i?'first':'second');el.style.left='';el.style.top='';});
 const homeRule=document.createElement('div');homeRule.className='home-rule';homeRule.append($('#home img[data-node-id="166:148"]'));$('#home').append(homeRule);
 const field=new ParticleField($('#particle-canvas'));
-const resultField=new ParticleField($('#result-canvas'));resultField.lockZoom=true;
+const resultField=new ParticleField($('#result-canvas'));resultField.lockZoom=true;resultField.freezePerception=true;
 
 function sizeArtwork(){
  document.documentElement.style.setProperty('--flow-scale',Math.min(innerWidth/1421,innerHeight/832));
@@ -37,7 +38,7 @@ function updateScreen(name,replace){
  if(name==='home')resetExperience();
  if(name==='experience'){Object.assign(controls,{structure:false,colors:false,motion:false});field.setPaused(false);updateConditions();updateControls();}
  if(name!=='experience'){cropping=false;$('#crop-frame').hidden=true;$('#crop-actions').hidden=true;$('.blue-panel').classList.remove('is-cropping');}
- sizeArtwork();resetEyes();scrollTo({top:0,behavior:'instant'});
+ sizeArtwork();resetEyes();if(name!=='result')resetAnatomy();scrollTo({top:0,behavior:'instant'});
  requestAnimationFrame(()=>{sizeArtwork();const el=$('#'+(name==='detail'?'result':name));el.setAttribute('tabindex','-1');el.focus({preventScroll:true});});
 }
 async function go(name,replace=false,immediate=false){
@@ -49,15 +50,15 @@ async function go(name,replace=false,immediate=false){
  if(transition)transition.skipTransition();
  if((screen==='result'&&name==='detail')||(screen==='detail'&&name==='result')){
   const id=comparing,button=$(`[data-symptom="${id}"]`),boxes=button?[...button.querySelectorAll('.symptom-dot,.symptom-label')].map(el=>el.getBoundingClientRect()):[];
-  document.documentElement.dataset.pageMotion='result-detail';updateScreen(name,replace);
+  document.documentElement.dataset.pageMotion='result-detail';updateScreen(name,replace);animateFocusLines(name==='detail');textEntrances.forEach(a=>a.cancel());textEntrances=[];
   const next=$(`[data-symptom="${id}"]`);
   if(!reduceMotion.matches&&next){next.querySelectorAll('.symptom-dot,.symptom-label').forEach((el,i)=>{const from=boxes[i],to=el.getBoundingClientRect();if(from&&to.width)el.animate([{transform:`translate(${from.x-to.x}px,${from.y-to.y}px)`},{transform:'none'}],{duration:700,easing:'ease-in-out'});});
-   if(name==='detail')$('.condition-explanation').animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:700,easing:'ease-in-out'});
+   if(name==='detail'){const text=$('.condition-explanation'),travel=innerHeight-text.getBoundingClientRect().top+24;textEntrances.push(text.animate([{opacity:0,transform:`translateY(${travel}px)`},{opacity:1,transform:'none'}],{duration:700,easing:'ease-in'}));}
   }return;
  }
  const motion=name==='home'?'dissolve':screen==='home'&&name==='intro'?'home-intro':screen==='intro'&&name==='conditions'?'intro-conditions':screen==='experience'&&name==='result'?'crop-result':'click';
  document.documentElement.dataset.pageMotion=motion;
- const after=()=>{if(screen==='result'&&capture){$('#result-bridge').classList.add('settled');resultField.setPaused(capture.state.paused);}};
+ const after=()=>{if(screen==='result'&&capture){$('#result-bridge').classList.add('settled');resultField.setPaused(true);}};
  if(document.startViewTransition&&!reduceMotion.matches&&!immediate){
   const current=document.startViewTransition(()=>updateScreen(name,replace));transition=current;current.ready.catch(()=>{});
   current.finished.catch(()=>{}).finally(()=>{if(transition===current){transition=null;after();}});
@@ -159,7 +160,7 @@ function updateControls(){display.forEach(c=>{const b=$(`[data-display="${c.id}"
 function setHover(button,value){button.classList.toggle('is-hover',value);animateArtwork(button);}
 display.forEach(c=>{const group=document.createElement('div');group.className='display-choice';const b=document.createElement('button');b.className='variant-button display-button';b.dataset.display=c.id;b.setAttribute('aria-label',c.name);b.innerHTML=layers(c);hoverStates(b);b.onclick=()=>{controls[c.id]=!controls[c.id];updateControls();};if(c.id==='motion')b.title='Pause or resume particle motion';const label=document.createElement('button');label.className='display-label';label.textContent=c.name;label.setAttribute('aria-label','Select '+c.name);label.onclick=()=>b.click();['pointerenter','focus'].forEach(type=>label.addEventListener(type,()=>setHover(b,true)));['pointerleave','blur'].forEach(type=>label.addEventListener(type,()=>setHover(b,false)));group.append(b,label);$('#display-options').append(group);});
 const eyeButton=$('.eye-control');eyeButton.innerHTML=layers({id:'eye-control',default:eyeButton.dataset.default,hover:eyeButton.dataset.hover,selected:eyeButton.dataset.selected});hoverStates(eyeButton);
-function resetExperience(){closeDetails();revision++;selection.reset();Object.assign(controls,{structure:false,colors:false,motion:false});capture=null;comparing=null;capturing=false;cancelCrop();field.reset();resultField.reset();$$('.is-hover').forEach(b=>b.classList.remove('is-hover'));updateConditions();updateControls();$('#result-symptoms').replaceChildren();$('#result-bridge').removeAttribute('src');}
+function resetExperience(){animateFocusLines(false,true);closeDetails();revision++;selection.reset();Object.assign(controls,{structure:false,colors:false,motion:false});capture=null;comparing=null;capturing=false;cancelCrop();field.reset();resultField.reset();$$('.is-hover').forEach(b=>b.classList.remove('is-hover'));updateConditions();updateControls();$('#result-symptoms').replaceChildren();$('#result-bridge').removeAttribute('src');}
 
 function fieldBounds(){const r=$('.blue-panel').getBoundingClientRect();return{width:r.width,height:r.height};}
 function paintCrop(){if(!cropRect)return;Object.assign($('#crop-frame').style,{left:cropRect.x+'px',top:cropRect.y+'px',width:cropRect.width+'px',height:cropRect.height+'px'});$('#crop-frame').setAttribute('aria-label',`Crop selection, ${Math.round(cropRect.width)} by ${Math.round(cropRect.height)}. Drag to move. Shift and arrow keys resize.`);}
@@ -176,7 +177,7 @@ async function captureSelection(){
  const preview=$('#crop-preview'),dpr=field.dpr;preview.width=Math.round(rect.width*dpr);preview.height=Math.round(rect.height*dpr);preview.getContext('2d').drawImage($('#particle-canvas'),rect.x*dpr,rect.y*dpr,rect.width*dpr,rect.height*dpr,0,0,preview.width,preview.height);preview.style.visibility='visible';
  const image=preview.toDataURL('image/png');capture={rect,bounds,state,image,details:{...selection.details},entries:selection.entries()};comparing=null;
  const bridge=$('#result-bridge');bridge.classList.remove('settled');bridge.src=image;await bridge.decode().catch(()=>{});if(token!==revision){capturing=false;return;}
- resultField.restoreState(state,cropLens(bounds.width,bounds.height,rect));resultField.setPaused(true);renderSymptoms();field.setPaused(true);await go('result');capturing=false;
+ resultField.restoreState({...state,paused:true},cropLens(bounds.width,bounds.height,rect));animateFocusLines(false,true);resultField.setPaused(true);renderSymptoms();field.setPaused(true);await go('result');capturing=false;
 }
 function renderSymptoms(){
  const list=$('#result-symptoms');list.classList.toggle('single',capture.entries.length===1);
@@ -224,10 +225,17 @@ addEventListener('pointermove', event => {
   wakeEyes();
 }, { passive: true });
 document.documentElement.addEventListener('pointerleave', resetEyes); addEventListener('blur', resetEyes);
-addEventListener('pagehide', () => { field.stop(); resultField.stop(); if (eyeRAF) cancelAnimationFrame(eyeRAF); });
+addEventListener('pagehide', () => { field.stop(); resultField.stop(); if (eyeRAF) cancelAnimationFrame(eyeRAF);if(anatomyRAF)cancelAnimationFrame(anatomyRAF);if(focusRAF)cancelAnimationFrame(focusRAF); });
 go(location.hash.slice(1)||'home',true,true);
 
-let anatomyRAF=0,anatomyX=0,anatomyY=0,anatomyTX=0,anatomyTY=0;
-function animateAnatomy(){anatomyRAF=0;const ease=reduceMotion.matches?1:.16;anatomyX+=(anatomyTX-anatomyX)*ease;anatomyY+=(anatomyTY-anatomyY)*ease;$('.eye-optics').style.transform=`translate(${anatomyX}px,${anatomyY}px)`;if(Math.abs(anatomyX-anatomyTX)+Math.abs(anatomyY-anatomyTY)>.05)anatomyRAF=requestAnimationFrame(animateAnatomy);}
-addEventListener('pointermove',e=>{if((screen!=='result'&&screen!=='detail')||e.pointerType==='touch')return;const r=$('.eye-optics').getBoundingClientRect();anatomyTX=Math.max(-10,Math.min(10,(e.clientX-r.left-r.width/2)*.025));anatomyTY=Math.max(-18,Math.min(18,(e.clientY-r.top-r.height/2)*.045));if(!anatomyRAF)anatomyRAF=requestAnimationFrame(animateAnatomy);},{passive:true});
-addEventListener('blur',()=>{anatomyTX=anatomyTY=0;if(!anatomyRAF)anatomyRAF=requestAnimationFrame(animateAnatomy);});
+function paintFocusLines(){FieldMath.focusRays(focusProgress).forEach((points,i)=>$('.focus-ray.'+(i?'lower':'upper')).setAttribute('points',points.join(' ')));}
+function animateFocusLines(expanded,instant=false){
+ if(focusRAF)cancelAnimationFrame(focusRAF);focusRAF=0;const target=expanded?1:0;
+ if(instant||reduceMotion.matches){focusProgress=target;paintFocusLines();return;}
+ const from=focusProgress,start=performance.now();
+ const tick=now=>{const t=Math.min(1,(now-start)/700),ease=t<.5?4*t*t*t:1-(-2*t+2)**3/2;focusProgress=from+(target-from)*ease;paintFocusLines();if(t<1)focusRAF=requestAnimationFrame(tick);else focusRAF=0;};focusRAF=requestAnimationFrame(tick);
+}
+function animateAnatomy(){anatomyRAF=0;const ease=reduceMotion.matches?1:.16;anatomyAngle+=(anatomyTarget-anatomyAngle)*ease;$('.eye-yellow').setAttribute('transform',`rotate(${anatomyAngle} 1192.88 407.299)`);if(Math.abs(anatomyAngle-anatomyTarget)>.005)anatomyRAF=requestAnimationFrame(animateAnatomy);}
+function resetAnatomy(){anatomyTarget=0;if(!anatomyRAF)anatomyRAF=requestAnimationFrame(animateAnatomy);}
+addEventListener('pointermove',e=>{if(screen!=='result'||e.pointerType==='touch')return;const r=$('.eye-optics').getBoundingClientRect();anatomyTarget=FieldMath.anatomyLook(e.clientY,r.top+r.height/2,r.height);if(!anatomyRAF)anatomyRAF=requestAnimationFrame(animateAnatomy);},{passive:true});
+addEventListener('blur',resetAnatomy);document.documentElement.addEventListener('pointerleave',resetAnatomy);

@@ -61,8 +61,26 @@
     }
     return edge.x+(edge.left?-1:1)*Math.min(edge.maxBulge??110,bulge);
   }
+  function focusRays(progress){
+    const t=clamp(progress,0,1),lerp=(a,b)=>a+(b-a)*t;
+    return [[lerp(0,58),lerp(411,356),869,lerp(411,356),1361,lerp(411,423),lerp(1421,1361),lerp(411,423)],
+      [lerp(0,58),lerp(411,476),lerp(869,872),lerp(411,476),1361,lerp(411,423),lerp(1421,1361),lerp(411,423)]];
+  }
+  function anatomyLook(pointerY,centerY,height){return clamp((centerY-pointerY)/Math.max(1,height)*6,-2.8,2.8);}
+  function snowSeed(time,yaw=0,pitch=0){return Math.floor(time*12)+Math.floor(yaw*89)*131+Math.floor(pitch*103)*197;}
+  function snowPixels(seed,size=128){
+    const pixels=new Uint8ClampedArray(size*size*4);let state=(seed*2654435761+2176136261)>>>0;
+    for(let i=0;i<pixels.length;i+=4){state^=state<<13;state^=state>>>17;state^=state<<5;const n=(state>>>0)/4294967296;
+      const light=n>.54,visible=n>.34;pixels[i]=pixels[i+1]=pixels[i+2]=light?235:12;pixels[i+3]=visible?(light?46:30):0;
+    }return pixels;
+  }
+  function floaterPosition(p,time,gaze={x:0,y:0},camera={yaw:0,pitch:0}){
+    const cycle=n=>((n%1)+1)%1;
+    return {x:cycle(p.x+p.vx*time+Math.sin(time*p.speed*.65+p.phase)*.035+gaze.x*(.45+Math.sin(p.phase)*.25)-camera.yaw*.004),
+      y:cycle(p.y+p.vy*time+Math.cos(time*p.speed*.55+p.phase)*.04+gaze.y*(.45+Math.cos(p.phase)*.25)-camera.pitch*.006)};
+  }
   const deutanColour = hex => visionColour(hex, 'deutan');
-  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, visionColour, deutanColour, COLOUR_MATRICES, visibleField, fieldBoundary };
+  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, visionColour, deutanColour, COLOUR_MATRICES, visibleField, fieldBoundary, focusRays, anatomyLook, snowSeed, snowPixels, floaterPosition };
   root.FieldMath = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(globalThis);

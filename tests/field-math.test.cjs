@@ -85,3 +85,37 @@ test('A touching scene particle bends the boundary into the missing region and l
   assert.ok(Math.abs(fieldBoundary(550,left,[particle])-500)<1e-5);
   assert.ok(Math.abs(fieldBoundary(300,left,[{...particle,x:900}])-500)<1e-5);
 });
+
+test('Focus rays share one baseline, split continuously, and reach the explanation geometry', () => {
+  const {focusRays}=require('../field-math.js');
+  const [startA,startB]=focusRays(0);assert.deepEqual(startA,startB);
+  assert.ok(startA.filter((_,i)=>i%2).every(y=>y===411));
+  const [middleA,middleB]=focusRays(.5);
+  assert.ok(middleA[1]>356&&middleA[1]<411);assert.ok(middleB[1]>411&&middleB[1]<476);
+  const [endA,endB]=focusRays(1);assert.equal(endA[1],356);assert.equal(endB[1],476);
+  assert.equal(endA[5],423);assert.equal(endB[5],423);
+});
+test('The yellow eye looks up/down through a restrained rotation around a fixed pivot', () => {
+  const {anatomyLook}=require('../field-math.js');
+  assert.equal(anatomyLook(400,400,500),0);
+  const up=anatomyLook(0,400,500),down=anatomyLook(800,400,500);
+  assert.ok(up>0&&up<=2.8);assert.ok(down<0&&down>=-2.8);
+  const frontY=407.299+(1024.41-1192.88)*Math.sin(up*Math.PI/180);
+  assert.ok(frontY<407.299&&frontY>398);
+});
+test('Visual snow has both light and dark softened noise, changing with time and view', () => {
+  const {snowSeed,snowPixels}=require('../field-math.js');
+  const seed=snowSeed(2,0,0),a=snowPixels(seed),b=snowPixels(snowSeed(2.1,0,0)),c=snowPixels(snowSeed(2,.1,0));
+  assert.notDeepEqual(a,b);assert.notDeepEqual(a,c);assert.deepEqual(a,snowPixels(seed));
+  let light=0,dark=0;
+  for(let i=0;i<a.length;i+=4)if(a[i+3])a[i]>128?light++:dark++;
+  assert.ok((light+dark)/(a.length/4)>.6&&(light+dark)/(a.length/4)<.7);assert.ok(light>1000&&dark>1000);
+});
+test('Floaters wander independently in opposite directions even with a stationary view', () => {
+  const {floaterPosition}=require('../field-math.js');
+  const p={x:.5,y:.5,vx:.01,vy:0,speed:0,phase:0};
+  const a=floaterPosition(p,3),b=floaterPosition({...p,vx:-.01},3);
+  assert.ok(a.x>.5&&b.x<.5);
+  const shifted=floaterPosition(p,3,{x:.04,y:0},{yaw:1,pitch:0});
+  assert.ok(Math.abs(shifted.x-a.x)<.03,'Floater response is weaker than a rigid view attachment');
+});

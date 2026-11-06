@@ -18,9 +18,9 @@ Then visit `http://localhost:4190`.
 
 1. Enter from the I SEE screen. The eye follows the pointer within a bounded area.
 2. Read the introduction and select **Click To Start**.
-3. Choose at least one personal condition. **Normal** is exclusive; Myopia, Color Blind, Astigmatism, Vision Snow, and Hemianopia can be combined. Clicking a colour-vision or visual-field illustration opens its blue-bordered side menu and turns the arrow right. The category is selected only after choosing a subtype. Escape cancels the open menu. Clicking any confirmed illustration again removes that condition, including Normal. The category arrow can still reopen its subtype menu. Selected names use 12px blue text. Next Page shows a yellow reminder if nothing is selected.
+3. Choose at least one personal condition. **Normal** is exclusive; Myopia, Color Blind, Astigmatism, Visual Snow, and Hemianopia can be combined. Clicking a colour-vision or visual-field illustration opens its blue-bordered side menu and turns the arrow right. The category is selected only after choosing a subtype. Escape cancels the open menu. Clicking any confirmed illustration again removes that condition, including Normal. The category arrow can still reopen its subtype menu. Selected names retain their original size and turn blue; subtype captions use 12px blue text. Next Page shows a yellow reminder if nothing is selected.
 4. Select **Next Page** to enter the blue particle field. The upper-left list shows the chosen conditions and subtypes.
-5. Choose **Crop the world in your eyes**, move the portrait frame, resize it from any corner, and confirm **Use this frame**. The selected view moves into the result page beside the original anatomical eye artwork. The result stays interactive: drag to rotate, with zoom locked. A single symptom is centred on the dotted line.
+5. Choose **Crop the world in your eyes**, move the portrait frame, resize it from any corner, and confirm **Use this frame**. The selected view moves into the result page beside the original anatomical eye artwork. The result is always frozen after cropping, regardless of the Motion setting in the field. Particles, visual-snow grain and floaters stop automatically. Dragging still rotates the captured world manually, with zoom locked. A single symptom is centred on the dotted line.
 6. Click a symptom to open its explanation: the cropped world moves left and the eye diagram opens into its side profile. The particle conditions stay unchanged. Click the heading again or press Escape to return to the result.
 
 In the field:
@@ -31,14 +31,14 @@ In the field:
 - Focus the field and use **Left / Right** to rotate, **Up / Down** or **+ / −** to change distance, and **Home** to reset the view.
 - **Structure** reveals connections and emphasizes outlines.
 - **Colors** enables evolving palette changes.
-- **Motion** pauses particle movement when selected; press it again to resume. All three lower controls start unselected on entering the field. Base drift is moderately faster; manual rotation and camera travel continue to work while paused.
+- **Motion** pauses the scene particles when selected; press it again to resume. Visual Snow keeps flickering and its translucent floaters keep drifting while the world is paused. Cropped results freeze both the world and the visual overlay. All three lower controls start unselected on entering the field. Base drift is moderately faster; manual rotation and camera travel continue to work while paused.
 - **Back** is the only in-field control that returns to the condition selector. The lower-left eye/music control is a reserved placeholder and does not navigate.
 - Clicking the grey surround keeps the current page open. Navigation uses the explicit buttons.
 - Returning to the home screen clears all personal conditions and restores default display controls, focus distance, rotation, tilt, and animation time for a fresh round.
 
 The crop frame also supports arrow keys to move, Shift+arrow keys to resize, Alt for one-pixel steps, Enter to confirm, and Escape to cancel. On the result canvas, arrow keys rotate/tilt and Home restores the captured pose; wheel and +/− cannot change its zoom.
 
-On the result page, the anatomical optical layers gently track the pointer; the outline remains fixed. Result buttons have a softly blurred centre that contracts on hover.
+On page 5, only the yellow anatomical shape turns gently up or down toward the pointer, around a fixed pivot and within ±2.8°. The blue ellipse, pink outline, and surrounding profile stay fixed. It returns to neutral in page 6. Result buttons have a softly blurred centre that contracts on hover.
 
 The site respects the system's reduced-motion setting, pauses rendering in hidden tabs, and reduces the particle count on narrow screens.
 
@@ -50,7 +50,7 @@ Motion preserves the original Figma vectors and the supplied video reference:
 
 - **Home → introduction:** 700 ms, ease-in-out. The logo moves, the small circle grows into the large eye using shared geometry without an iris dissolve, and the background rings and diagonal cross appear with a rotating reveal.
 - **Introduction → conditions:** 700 ms, ease-in-out. The two cross lines independently translate, rotate, and resize; the dotted circle shrinks and moves into its new position.
-- **Result → explanation:** 700 ms, ease-in-out. The live portrait slides left, the selected symptom moves to the heading, and the anatomical illustration scales and shifts to show the full profile and light paths.
+- **Result → explanation:** 700 ms, ease-in-out. The live portrait slides left, the selected symptom moves to the heading, and the anatomical illustration scales and shifts to show the full profile. Two coincident dotted polylines open geometrically from the centre into the upper and lower light paths, with no line dissolve. The explanation text rises from below the viewport with opacity 0→1 over 700 ms, ease-in; its containers remain transparent.
 - **Field → result:** 700 ms, ease-in-out. The captured portrait frame moves left and expands to its result size as the original eye artwork enters from the right. The live 3D renderer inherits the exact camera, time, projection, conditions, and particle count of the selected region.
 - **Hover / keyboard focus:** 700 ms for page 3 conditions; 450 ms for other controls, all ease-in-out. Matched SVG parts move and resize between the original variants. Only owned vector animations are cancelled on a state change; CSS optical sweeps keep running. The cyan bars sit above all masks and filters and retain their hover colour after confirmation. Texture differences crossfade during the same motion.
 - **Click / selection / other page changes:** 300 ms, ease-in.
@@ -66,7 +66,7 @@ These effects are artistic studies, not diagnostic or prescription-accurate simu
 - **Color Blind** offers deuteranopia, protanopia, tritanopia, and a partial deuteranomaly approximation, using Machado matrices in linear RGB.
 - **Astigmatism** adds soft, asymmetrical light trails along one consistent diagonal axis, with a gentle halo and a faint secondary image. The option preview uses the same parallel smear instead of a radial star.
 - **Hemianopia** masks the selected left, right, or both peripheral areas in black. A soft, curved boundary responds to the original particles as they approach it. Their own shapes, colours and positions stretch the edge and blend into it, without adding an independent layer of decorative circles. The selector preview sweeps in from the outer edge over 700 ms. The Side setting is an artistic central-view study, not a distinct diagnostic subtype. Black denotes information withheld in this artwork, rather than claiming literal black vision in clinical hemianopia.
-- **Vision Snow** adds drifting grey dust in front of the view, subtle grain, and a buffered scene delay with a faint older afterimage. The target delay is about 130 ms, quantized by the capture/render cadence. Reduced-motion mode keeps a static dust layer and skips the temporal effect. This is an artistic interpretation, not a clinical assessment or every person's experience.
+- **Visual Snow** adds softer light/dark flickering grain across the field, translucent rings/threads/specks and more glassy loops and strands with independent drift, and a buffered scene delay with a faint older afterimage. The visual overlay has its own clock, independent of the scene-particle Motion setting. Grain changes at about 12 steps per second and also responds to view rotation. There are 80 foreground floaters on wide screens and 48 on narrow screens, with translucent loops/strands forming the majority. Floaters have a small decaying response to eye movement rather than being rigidly attached to the scene. The target delay is about 130 ms, quantized by the capture/render cadence. Reduced-motion mode keeps a static dust layer and skips the temporal effect. This is an artistic interpretation, not a clinical assessment or every person's experience.
 
 Condition selections stay in memory for the current page session. They are not saved, uploaded, or tracked. There is no camera access, backend, analytics, or authentication.
 
@@ -106,6 +106,8 @@ The app itself does not require Node.js. No dependencies need to be installed to
 - [Machado, Oliveira & Fernandes, 2009 — A physiologically-based model for simulation of color vision deficiency](https://pubmed.ncbi.nlm.nih.gov/19834201/).
 - [National Eye Institute — Myopia](https://www.nei.nih.gov/eye-health-information/eye-conditions-and-diseases/nearsightedness-myopia).
 - [National Eye Institute — Types of Refractive Errors](https://www.nei.nih.gov/eye-health-information/eye-conditions-and-diseases/refractive-errors/types-refractive-errors).
+- [American Academy of Ophthalmology — Visual Snow Syndrome](https://www.aao.org/eye-health/tips-prevention/what-is-visual-snow-syndrome-symptoms-treatment).
+- [National Eye Institute — Floaters](https://www.nei.nih.gov/eye-health-information/eye-conditions-and-diseases/floaters).
 - [NIH GARD — Visual Snow Syndrome](https://rarediseases.info.nih.gov/diseases/12062/visual-snow-syndrome).
 - [NHS Christie — Hemianopia](https://www.christie.nhs.uk/media/zr5hxwla/1084-hemianopia-ot-april-2022.pdf).
 - [National Eye Institute — Types of Color Vision Deficiency](https://www.nei.nih.gov/eye-health-information/eye-conditions-and-diseases/color-blindness/types-color-vision-deficiency).

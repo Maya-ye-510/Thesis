@@ -73,3 +73,28 @@ test('Primary yellow, pink, blue/cyan particles dominate, including during colou
   field.controls.colors=true;
   for(const time of [0,6,12,30,75]){field.time=time;assert.ok(ratio()>.84&&ratio()<.9);}
 });
+
+test('Visual-snow floaters respond with a decaying eye-movement offset', () => {
+  const field=fieldPrototype();Object.assign(field,{active:true,width:1000,paused:false,reduced:{matches:false},camera:{yaw:0,pitch:0,zoom:0},target:{yaw:1,pitch:0,zoom:0},time:0,last:1000,conditions:new Set(['snow']),snowGaze:{x:0,y:0,yaw:0,pitch:0},canvas:{dataset:{}},draw(){},request(){}});
+  field.frame(1050);const impulse=field.snowGaze.x;assert.ok(impulse>0);
+  field.target={...field.camera};field.frame(1100);assert.ok(field.snowGaze.x>0&&field.snowGaze.x<impulse);
+});
+
+test('Cropping paused Visual Snow captures the current view; moving snow captures its displayed delayed scene', () => {
+  const field=fieldPrototype();
+  Object.assign(field,{conditions:new Set(['snow']),reduced:{matches:false},camera:{yaw:1.4,pitch:.2,zoom:0},target:{yaw:1.4,pitch:.2,zoom:0},time:10,focus:.35,width:1000,details:{},controls:{},snowGaze:{x:.01,y:0},lastPresentedState:{camera:{yaw:0,pitch:0,zoom:0},time:9.8,snowGaze:{x:0,y:0}}});
+  field.paused=true;const paused=field.captureState();assert.equal(paused.camera.yaw,1.4);assert.equal(paused.time,10);
+  field.paused=false;const running=field.captureState();assert.equal(running.camera.yaw,0);assert.equal(running.time,9.8);
+  assert.equal(running.snowView.camera.yaw,1.4);assert.equal(running.snowView.time,10);
+});
+
+test('Motion pauses world particles while Visual Snow continues on its independent clock', () => {
+  const field=fieldPrototype();let requests=0;
+  Object.assign(field,{active:true,width:1000,paused:true,freezePerception:false,reduced:{matches:false},camera:{yaw:0,pitch:0,zoom:0},target:{yaw:0,pitch:0,zoom:0},time:7,snowTime:10,last:1000,conditions:new Set(['snow']),snowGaze:{x:0,y:0,yaw:0,pitch:0},canvas:{dataset:{}},draw(){},request(){requests++;}});
+  field.frame(1050);assert.equal(field.time,7);assert.ok(field.snowTime>10);assert.ok(requests>0);
+});
+test('A cropped result freezes both clocks and stops requesting continuous snow frames', () => {
+  const field=fieldPrototype();let requests=0;
+  Object.assign(field,{active:true,width:1000,paused:true,freezePerception:true,reduced:{matches:false},camera:{yaw:0,pitch:0,zoom:0},target:{yaw:0,pitch:0,zoom:0},time:7,snowTime:10,last:1000,historyUntil:0,conditions:new Set(['snow']),snowGaze:{x:0,y:0,yaw:0,pitch:0},canvas:{dataset:{}},draw(){},request(){requests++;}});
+  field.frame(1050);assert.equal(field.time,7);assert.equal(field.snowTime,10);assert.equal(requests,0);
+});
