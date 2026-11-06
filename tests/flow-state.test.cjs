@@ -69,3 +69,12 @@ test('Each selected condition has two distinct explanation blocks', () => {
     assert.notEqual(notes[condition].overview,notes[condition].interpretation);
   }
 });
+
+
+test('Every confirmed condition cancels on a second click, including Normal and subtype categories', () => {
+  for(const id of ['normal','myopia','colour','astigmatism','snow','hemianopia']){
+    const s=new ConditionSelection();
+    if(id==='colour')s.setDetail(id,'tritan');else if(id==='hemianopia')s.setDetail(id,'side');else s.toggle(id);
+    assert.ok(s.selected.has(id));s.toggle(id);assert.equal(s.selected.size,0);
+  }
+});

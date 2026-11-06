@@ -3,7 +3,7 @@
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   function toggleCondition(current, id) {
     const next = new Set(current);
-    if (id === 'normal') return new Set(['normal']);
+    if (id === 'normal') return current.has('normal') ? new Set() : new Set(['normal']);
     next.delete('normal');
     if (next.has(id)) next.delete(id); else next.add(id);
     return next;
@@ -52,8 +52,17 @@
     return '#' + rgb.map(v => Math.round(255 * (v <= .0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - .055)).toString(16).padStart(2, '0')).join('');
   }
   function visibleField(width,type='left'){return type==='side'?[width*.34,width*.66]:type==='right'?[0,width*.5]:[width*.5,width];}
+  // Existing particles deform the boundary into the missing region as they touch it.
+  function fieldBoundary(y,edge,contacts){
+    let bulge=0;
+    for(const p of contacts){
+      const r=Math.min(90,Math.max(5,p.r)),near=Math.exp(-1*((p.x-edge.x)/(r+45))**2);
+      bulge+=r*1.4*near*Math.exp(-2*((y-p.y)/(r+20))**2)*p.alpha;
+    }
+    return edge.x+(edge.left?-1:1)*Math.min(edge.maxBulge??110,bulge);
+  }
   const deutanColour = hex => visionColour(hex, 'deutan');
-  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, visionColour, deutanColour, COLOUR_MATRICES, visibleField };
+  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, visionColour, deutanColour, COLOUR_MATRICES, visibleField, fieldBoundary };
   root.FieldMath = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(globalThis);

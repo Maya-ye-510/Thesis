@@ -7,8 +7,8 @@ const FieldMath = require('../field-math.js');
 
 function fieldPrototype() {
   const context = { FieldMath, document: { createElement: () => {
-    const canvas = { width: 0, height: 0, stamp: null, strokes:0 };
-    canvas.getContext = () => ({ clearRect() {}, drawImage(source) { canvas.stamp = source.stamp; },translate(){},rotate(){},save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},arc(){},fill(){},stroke(){canvas.strokes++;},createLinearGradient(){return {addColorStop(){}};} });
+    const canvas = { width: 0, height: 0, stamp: null, strokes:0, rotations:[] };
+    canvas.getContext = () => ({ clearRect() {}, drawImage(source) { canvas.stamp = source.stamp; },translate(){},rotate(angle){canvas.rotations.push(angle);},save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},arc(){},fill(){},stroke(){canvas.strokes++;},fillRect(){},createRadialGradient(){return {addColorStop(){}};},createLinearGradient(){return {addColorStop(){}};} });
     return canvas;
   } } };
   vm.createContext(context);
@@ -48,23 +48,28 @@ test('Paused particles keep their time while manual rotation remains responsive'
   field.frame(1050);assert.equal(field.time,7);assert.ok(field.camera.yaw>0);
   field.paused=false;field.frame(1100);assert.ok(field.time>7);
 });
-test('Lost visual fields are fully black away from the feathered luminous edge', () => {
+test('The missing field is filled behind a soft boundary without autonomous decorative rings', () => {
   for(const mode of ['left','right','side']){
-    const field=fieldPrototype(),fills=[];
-    const ctx={globalAlpha:1,fillStyle:'',createLinearGradient(){return{addColorStop(){}};},fillRect(x,y,w,h){fills.push({x,w,fill:this.fillStyle});},save(){},restore(){},beginPath(){},rect(){},clip(){},arc(){},stroke(){}};
-    Object.assign(field,{width:1000,height:600,time:0,lens:null,details:{hemianopia:mode}});field.drawFieldLoss(ctx);
-    const black=fills.filter(f=>f.fill==='#000');
-    if(mode!=='right')assert.ok(black.some(f=>f.x===0&&f.w>300));
-    if(mode!=='left')assert.ok(black.some(f=>f.x>500&&f.x+f.w>=1000));
+    const field=fieldPrototype(),paths=[],current=[];
+    const ctx={globalAlpha:1,fillStyle:'',save(){},restore(){},beginPath(){current.length=0;},moveTo(x,y){current.push({x,y});},lineTo(x,y){current.push({x,y});},closePath(){},fill(){paths.push({fill:this.fillStyle,points:[...current],filter:this.filter});},drawImage(){throw Error('No particle contacts means no extra circles');}};
+    Object.assign(field,{width:1000,height:600,time:0,lens:null,details:{hemianopia:mode},fieldContacts:[]});field.drawFieldLoss(ctx);
+    assert.equal(paths.length,mode==='side'?2:1);
+    assert.ok(paths.every(p=>p.fill==='#000'&&p.filter==='blur(20px)'));
+    if(mode!=='right')assert.ok(paths.some(p=>p.points[0].x<0));
+    if(mode!=='left')assert.ok(paths.some(p=>p.points[0].x>1000));
   }
 });
-
-
-test('Astigmatism adds cached radial strokes; the expanded base palette omits dark grey/navy', () => {
-  const field=fieldPrototype();field.sprites=new Map();
-  const normal=field.sprite('disc','#ff563b',0,false),astig=field.sprite('disc','#ff563b',0,true);
-  assert.equal(normal.strokes,0);assert.equal(astig.strokes,4);
-  assert.equal(field.sprite('disc','#ff563b',0,true),astig);
-  assert.ok(field.constructor.palette.length>=12);
+test('Astigmatism caches a single-axis, parallel light smear instead of radial spokes', () => {
+  const field=fieldPrototype();field.sprites=new Map();const glare=field.glare('#ff48cf');
+  assert.equal(glare.strokes,3);assert.equal(glare.rotations.length,1);
+  assert.equal(field.glare('#ff48cf'),glare);
+});
+test('Primary yellow, pink, blue/cyan particles dominate, including during colour evolution', () => {
+  const field=fieldPrototype();field.build();field.conditions=new Set();field.controls={colors:false};
+  const primary=new Set(field.constructor.primaryColours.map(i=>field.constructor.palette[i]));
+  const ratio=()=>field.particles.filter(p=>primary.has(field.colourFor(p))).length/field.particles.length;
+  assert.ok(ratio()>.84&&ratio()<.9);
   assert.ok(!field.constructor.palette.includes('#101a48'));
+  field.controls.colors=true;
+  for(const time of [0,6,12,30,75]){field.time=time;assert.ok(ratio()>.84&&ratio()<.9);}
 });

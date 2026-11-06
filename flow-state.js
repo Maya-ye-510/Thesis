@@ -11,7 +11,7 @@
   ];
   class ConditionSelection{
     constructor(){this.selected=new Set();this.details={colour:'deutan',hemianopia:'left'};}
-    toggle(id){if(!CONDITIONS.some(c=>c.id===id))return;if(id==='normal'){this.selected.clear();this.selected.add(id);return;}this.selected.delete('normal');this.selected.has(id)?this.selected.delete(id):this.selected.add(id);}
+    toggle(id){if(!CONDITIONS.some(c=>c.id===id))return;if(id==='normal'){const chosen=this.selected.has(id);this.selected.clear();if(!chosen)this.selected.add(id);return;}this.selected.delete('normal');this.selected.has(id)?this.selected.delete(id):this.selected.add(id);}
     setDetail(id,value){const c=CONDITIONS.find(c=>c.id===id);if(!c?.options?.some(o=>o.value===value))return;this.details[id]=value;this.selected.delete('normal');this.selected.add(id);}
     entries(){return CONDITIONS.filter(c=>this.selected.has(c.id)).map(c=>({...c,detail:c.options?.find(o=>o.value===this.details[c.id])?.label||''}));}
     reset(){this.selected.clear();this.details={colour:'deutan',hemianopia:'left'};}

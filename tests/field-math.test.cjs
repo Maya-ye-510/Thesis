@@ -74,3 +74,14 @@ test('Visual-field modes preserve the requested half or central region', () => {
   assert.deepEqual(visibleField(1000,'right'),[0,500]);
   assert.deepEqual(visibleField(1000,'side'),[340,660]);
 });
+
+
+test('A touching scene particle bends the boundary into the missing region and leaves no permanent bubble', () => {
+  const {fieldBoundary}=require('../field-math.js');
+  const left={x:500,left:true},right={x:500,left:false},particle={x:510,y:300,r:30,alpha:.8};
+  assert.equal(fieldBoundary(300,left,[]),500);
+  assert.ok(fieldBoundary(300,left,[particle])<480);
+  assert.ok(fieldBoundary(300,right,[particle])>520);
+  assert.ok(Math.abs(fieldBoundary(550,left,[particle])-500)<1e-5);
+  assert.ok(Math.abs(fieldBoundary(300,left,[{...particle,x:900}])-500)<1e-5);
+});

@@ -3,6 +3,7 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const {CONDITIONS,ConditionSelection,initialCrop,moveCrop,resizeCrop,cropLens}=SeeFlow;
 const selection=new ConditionSelection();
 const controls={structure:false,colors:false,motion:false};
+const artAnimations=new WeakMap();
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 let screen='home',transition=null,cropping=false,cropRect=null,cropDrag=null,capture=null,comparing=null,capturing=false,revision=0,detailAnchor=null;
 const homeCenter=document.createElement('div');homeCenter.className='home-center';$('#home').append(homeCenter);homeCenter.append($('#enter'),$('.eye-small'));
@@ -83,11 +84,13 @@ function animateArtwork(button, click = false) {
   const sourceParts = [...source.querySelectorAll('[data-motion-key]')];
   const targetParts = [...target.querySelectorAll('[data-motion-key]')];
   const boxes = new Map(sourceParts.map(el => [el.dataset.motionKey, el.getBoundingClientRect()]));
-  button.getAnimations({ subtree: true }).forEach(animation => animation.cancel());
+  (artAnimations.get(button)||[]).forEach(animation=>animation.cancel());
+  const owned=[];artAnimations.set(button,owned);
   button.dataset.artState = state;
   button.querySelectorAll('.art-state').forEach(layer => { layer.style.opacity = layer === target ? '1' : '0'; });
   if (reduceMotion.matches) return;
   const timing = { duration: click ? 300 : button.matches('[data-condition]') ? 700 : 450, easing: click ? 'ease-in' : 'ease-in-out' };
+  const animate=(el,frames)=>{const animation=el.animate(frames,timing);owned.push(animation);};
   const inverse = (from, to, svg) => {
     const units = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
     return `translate(${(from.x - to.x) / units}px,${(from.y - to.y) / units}px) scale(${from.width / to.width},${from.height / to.height})`;
@@ -95,13 +98,13 @@ function animateArtwork(button, click = false) {
   for (const part of targetParts) {
     const from = boxes.get(part.dataset.motionKey), to = part.getBoundingClientRect();
     if (!from?.width || !from.height || !to.width || !to.height) continue;
-    part.animate([{ transform: inverse(from, to, part.ownerSVGElement) }, { transform: 'none' }], timing);
+    animate(part,[{ transform: inverse(from, to, part.ownerSVGElement) }, { transform: 'none' }]);
     const old = sourceParts.find(el => el.dataset.motionKey === part.dataset.motionKey);
     const oldBox = old.getBoundingClientRect();
-    old.animate([{ transform: inverse(from, oldBox, old.ownerSVGElement) }, { transform: inverse(to, oldBox, old.ownerSVGElement) }], timing);
+    animate(old,[{ transform: inverse(from, oldBox, old.ownerSVGElement) }, { transform: inverse(to, oldBox, old.ownerSVGElement) }]);
   }
-  source.animate([{ opacity: 1 }, { opacity: 0 }], timing);
-  target.animate([{ opacity: 0 }, { opacity: 1 }], timing);
+  animate(source,[{ opacity: 1 }, { opacity: 0 }]);
+  animate(target,[{ opacity: 0 }, { opacity: 1 }]);
 }
 function hoverStates(button) {
   button.dataset.artState = 'default';
@@ -128,8 +131,8 @@ function updateConditions(){
 CONDITIONS.forEach(c=>{
  const card=document.createElement('div');card.className='condition-card';
  const b=document.createElement('button');b.className='condition';b.dataset.condition=c.id;b.setAttribute('aria-label',c.name);b.setAttribute('aria-pressed','false');
- const optics=c.id==='astigmatism'?'<span class="preview-rays" aria-hidden="true"><i></i><i></i><i></i><i></i></span>':c.id==='hemianopia'?'<span class="hemi-shade left" aria-hidden="true"></span><span class="hemi-shade right" aria-hidden="true"></span><span class="hemi-shade side" aria-hidden="true"></span>':'';
- b.innerHTML=`<span class="condition-art" aria-hidden="true"><span class="condition-geometry">${layers(c,true)}</span>${optics}</span><span class="condition-label">${c.name}</span>`;hoverStates(b);b.onclick=()=>{if(c.options)openDetails(c,card.querySelector('.condition-details-toggle'));else{closeDetails();selection.toggle(c.id);updateConditions();}};card.append(b);
+ const optics=c.id==='astigmatism'?'<span class="preview-rays" aria-hidden="true"><i></i><i></i><i></i></span>':c.id==='hemianopia'?'<span class="hemi-mask-layers" aria-hidden="true"><span class="hemi-shade left"></span><span class="hemi-shade right"></span><span class="hemi-shade side"></span></span>':'';
+ b.innerHTML=`<span class="condition-art" aria-hidden="true"><span class="condition-geometry">${layers(c,true)}</span>${optics}<span class="condition-bar"></span></span><span class="condition-label">${c.name}</span>`;hoverStates(b);b.onclick=()=>{if(selection.selected.has(c.id)||!c.options){closeDetails();selection.toggle(c.id);updateConditions();}else openDetails(c,card.querySelector('.condition-details-toggle'));};card.append(b);
  if(c.options){const arrow=document.createElement('button');arrow.className='condition-details-toggle';arrow.dataset.category=c.id;arrow.setAttribute('aria-label',c.name+' options');arrow.setAttribute('aria-haspopup','dialog');arrow.setAttribute('aria-expanded','false');arrow.innerHTML='<img src="assets/nov4/option-arrow.svg" alt="">';arrow.onclick=()=>detailAnchor===arrow?closeDetails():openDetails(c,arrow);const detail=document.createElement('span');detail.className='chosen-detail';detail.dataset.detailValue=c.id;card.append(arrow,detail);}
  $('#condition-options').append(card);
 });
@@ -144,7 +147,7 @@ function positionDetails(){
 function openDetails(c,anchor){
  closeDetails();detailAnchor=anchor;const dialog=$('#condition-details');dialog.setAttribute('aria-label',c.name+' options');anchor.setAttribute('aria-expanded','true');anchor.closest('.condition-card').classList.add('is-open');
  $('#detail-options').replaceChildren(...c.options.map(o=>{const label=document.createElement('label'),input=document.createElement('input');input.type='radio';input.name='condition-detail';input.value=o.value;input.checked=selection.details[c.id]===o.value;input.onclick=()=>{selection.setDetail(c.id,o.value);updateConditions();closeDetails(true);};label.append(input,document.createTextNode(o.label));return label;}));
- $('#detail-clear').hidden=!selection.selected.has(c.id);$('#detail-clear').onclick=()=>{selection.selected.delete(c.id);updateConditions();closeDetails(true);};dialog.hidden=false;positionDetails();
+ dialog.hidden=false;positionDetails();
  if(!reduceMotion.matches)dialog.animate([{opacity:0,transform:'translateX(-8px)'},{opacity:1,transform:'none'}],{duration:300,easing:'ease-in'});
  $('#detail-options input:checked').focus({preventScroll:true});
 }
@@ -192,7 +195,7 @@ async function openExplanation(id){
  $('#result-announcement').textContent=CONDITIONS.find(c=>c.id===id).name+' — ways of seeing';
 }
 $('#result-canvas').addEventListener('click',()=>{if(!capture||resultField.lastGestureMoved||screen!=='result')return;resultField.target.yaw+=Math.PI/6;resultField.updateRotation();resultField.request();});
-updateControls();
+updateConditions();updateControls();
 // Eye movement is computed from the actual responsive element bounds.
 const eyes = $$('[data-eye]').map(el => ({ el, pupil: el.querySelector('.pupil'), x: 0, y: 0, tx: 0, ty: 0 })); let eyeRAF = 0;
 function animateEyes() {
