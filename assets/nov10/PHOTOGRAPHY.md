@@ -1,0 +1,74 @@
+# Photograph provenance and depth processing
+
+This collection contains 48 distinct photographs: eight for each of six conditions. No original photograph is reused within or across conditions. All source-file revisions were published before 2021 and have named photographers and reuse licences. No AI images or generative photo edits are used.
+
+`photos/*-source.webp` preserves the unfiltered, individually framed photographic crop. The matching `.webp` is the displayed optical study. The full original and its Commons description are linked below and in the website’s ABOUT panel.
+
+## Processing
+
+- Myopia: each scene has a hand-traced foreground mask, based on the actual leaves, rock, timber, tree trunks or sculpture in that photograph. Sharp nearby pixels are composited over a separately defocused distant plane. Ground surfaces and the receding pier use gradual depth transitions; the forest also has an intermediate trunk plane. Reflected distant architecture stays defocused. This replaces uniform whole-frame blur.
+- Myopia studies vary distance-defocus strength. They are qualitative illustrations, not diopter or Snellen-acuity conversions. Mask geometry, foreground/background sample points and blur parameters are recorded for each photograph in `photography.js`.
+- Astigmatism: soft, tapered, parallel light trails are placed only at measured highlights from each genuine night photograph; lengths vary with luminance and directions vary between studies. No new scenery or light sources are invented.
+- Colour: the selected subtype applies the existing linear-RGB colour-vision transform to each of eight different photographs.
+- Visual Snow: persistent procedural static, transparent floaters and subtle afterimage overlays remain separate from the photograph.
+- Hemianopia: the chosen side uses a soft field mask; black is an artistic marker for withheld information.
+- Normal: photographs retain their original optical appearance, with framing and web compression only.
+
+Photographic adaptations keep the corresponding photograph’s licence. Those licences do not apply to unrelated site code or Maya Ye’s Figma artwork.
+
+## Individual photographs
+
+| Study | Photograph / author | Licence | Published source revision |
+| --- | --- | --- | --- |
+| myopia-01 | [Bilberry bush and moss in Gullmarsskogen ravine.jpg](<https://commons.wikimedia.org/wiki/File:Bilberry_bush_and_moss_in_Gullmarsskogen_ravine.jpg>) — W.carter | [CC0](<https://creativecommons.org/publicdomain/zero/1.0/deed.en>) | 2018-05-15 |
+| myopia-02 | [Blue Lake in Mount Cook National Park.jpg](<https://commons.wikimedia.org/wiki/File:Blue_Lake_in_Mount_Cook_National_Park.jpg>) — Krzysztof Golik | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2017-12-13 |
+| myopia-03 | [Evening on Kathleen Lake.jpg](<https://commons.wikimedia.org/wiki/File:Evening_on_Kathleen_Lake.jpg>) — Jakub Fryš | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-06-07 |
+| myopia-04 | [Meenikunno maastikukaiteala.jpg](<https://commons.wikimedia.org/wiki/File:Meenikunno_maastikukaiteala.jpg>) — Ruta Badina | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2014-02-05 |
+| myopia-05 | [Fv55 road at Sognefjellet, 2013 June.jpg](<https://commons.wikimedia.org/wiki/File:Fv55_road_at_Sognefjellet,_2013_June.jpg>) — Ximonic (Simo Räsänen) | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2014-02-22 |
+| myopia-06 | [01 Calanche Piana.jpg](<https://commons.wikimedia.org/wiki/File:01_Calanche_Piana.jpg>) — Myrabella | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2013-10-03 |
+| myopia-07 | [A pier at a campsite during sunset, Sidney Spit (part of Gulf Islands National Park Reserve), Sidney Island, British Columbia, Canada 20.jpg](<https://commons.wikimedia.org/wiki/File:A_pier_at_a_campsite_during_sunset,_Sidney_Spit_(part_of_Gulf_Islands_National_Park_Reserve),_Sidney_Island,_British_Columbia,_Canada_20.jpg>) — Michal Klajban | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2018-06-21 |
+| myopia-08 | [2019 - Wiener Karlskirche mit Teich und "Hill Arches" Skulptur am Abend.jpg](<https://commons.wikimedia.org/wiki/File:2019_-_Wiener_Karlskirche_mit_Teich_und_%22Hill_Arches%22_Skulptur_am_Abend.jpg>) — Moahim | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-09-21 |
+| astigmatism-01 | [141227 Berliner Dom.jpg](<https://commons.wikimedia.org/wiki/File:141227_Berliner_Dom.jpg>) — Ansgar Koreng | [CC BY 3.0 de](<https://creativecommons.org/licenses/by/3.0/de/deed.en>) | 2015-07-11 |
+| astigmatism-02 | [2014 Kłodzko, starówka 12.jpg](<https://commons.wikimedia.org/wiki/File:2014_K%C5%82odzko,_star%C3%B3wka_12.jpg>) — Jacek Halicki | [CC BY-SA 3.0 pl](<https://creativecommons.org/licenses/by-sa/3.0/pl/deed.en>) | 2019-04-12 |
+| astigmatism-03 | [Bismarck tower Glauchau - night view (aka).jpg](<https://commons.wikimedia.org/wiki/File:Bismarck_tower_Glauchau_-_night_view_(aka).jpg>) — André Karwath aka Aka | [CC BY-SA 2.5](<https://creativecommons.org/licenses/by-sa/2.5>) | 2007-10-06 |
+| astigmatism-04 | [Cementera, Yura, Perú, 2015-08-01, DD 129-131 HDR.JPG](<https://commons.wikimedia.org/wiki/File:Cementera,_Yura,_Per%C3%BA,_2015-08-01,_DD_129-131_HDR.JPG>) — Diego Delso | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2015-09-14 |
+| astigmatism-05 | [2017 - Київ - Місячний вечір на Замковій горі.jpg](<https://commons.wikimedia.org/wiki/File:2017_-_%D0%9A%D0%B8%D1%97%D0%B2_-_%D0%9C%D1%96%D1%81%D1%8F%D1%87%D0%BD%D0%B8%D0%B9_%D0%B2%D0%B5%D1%87%D1%96%D1%80_%D0%BD%D0%B0_%D0%97%D0%B0%D0%BC%D0%BA%D0%BE%D0%B2%D1%96%D0%B9_%D0%B3%D0%BE%D1%80%D1%96.jpg>) — Moahim | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2017-09-30 |
+| astigmatism-06 | [Arc Triomphe.jpg](<https://commons.wikimedia.org/wiki/File:Arc_Triomphe.jpg>) — Benh LIEU SONG | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2007-10-25 |
+| astigmatism-07 | [Centerm at night as seen from Canada Place.jpg](<https://commons.wikimedia.org/wiki/File:Centerm_at_night_as_seen_from_Canada_Place.jpg>) — Dllu | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2016-01-25 |
+| astigmatism-08 | [Carcassonne Cite.jpg](<https://commons.wikimedia.org/wiki/File:Carcassonne_Cite.jpg>) — Benh LIEU SONG (Flickr) | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2020-03-18 |
+| colour-01 | [Organic home-grown tomatoes - unripe to ripe.jpg](<https://commons.wikimedia.org/wiki/File:Organic_home-grown_tomatoes_-_unripe_to_ripe.jpg>) — Michal Klajban | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2020-03-25 |
+| colour-02 | [Citrus fruits.jpg](<https://commons.wikimedia.org/wiki/File:Citrus_fruits.jpg>) — Scott Bauer, USDA | [Public domain](<https://commons.wikimedia.org/wiki/File:Citrus_fruits.jpg#Licensing>) | 2005-01-15 |
+| colour-03 | [Dish of blueberries.jpg](<https://commons.wikimedia.org/wiki/File:Dish_of_blueberries.jpg>) — Petar Milošević | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2017-11-29 |
+| colour-04 | [Autumn leaf (Doleschallia bisaltide) Bali I.jpg](<https://commons.wikimedia.org/wiki/File:Autumn_leaf_(Doleschallia_bisaltide)_Bali_I.jpg>) — Charles J. Sharp | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2015-07-19 |
+| colour-05 | [2014.03.29.-19-Mannheim Neckarau Waldpark--Wald-Veilchen.jpg](<https://commons.wikimedia.org/wiki/File:2014.03.29.-19-Mannheim_Neckarau_Waldpark--Wald-Veilchen.jpg>) — Andreas Eichler | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2015-12-26 |
+| colour-06 | [African Cape Daisy (Osteospermum barberiae).jpg](<https://commons.wikimedia.org/wiki/File:African_Cape_Daisy_(Osteospermum_barberiae).jpg>) — AntanO | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-06-10 |
+| colour-07 | [Grapes, Dry Creek Valley-7705.jpg](<https://commons.wikimedia.org/wiki/File:Grapes,_Dry_Creek_Valley-7705.jpg>) — Frank Schulenburg | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-07-28 |
+| colour-08 | [Baby Bell pepper Capsicum annuum 3.jpg](<https://commons.wikimedia.org/wiki/File:Baby_Bell_pepper_Capsicum_annuum_3.jpg>) — W.Rebel | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2011-10-20 |
+| snow-01 | [Mountain view in Robson valley.jpg](<https://commons.wikimedia.org/wiki/File:Mountain_view_in_Robson_valley.jpg>) — Jakub Fryš (talk · contribs) | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-06-09 |
+| snow-02 | [Cirrus front over Austnesfjorden, Austvågøya, Lofoten, Norway, 2015 April.jpg](<https://commons.wikimedia.org/wiki/File:Cirrus_front_over_Austnesfjorden,_Austv%C3%A5g%C3%B8ya,_Lofoten,_Norway,_2015_April.jpg>) — Ximonic (Simo Räsänen) | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2015-09-27 |
+| snow-03 | [Norra Kvill National Park, Sweden (by Pudelek).jpg](<https://commons.wikimedia.org/wiki/File:Norra_Kvill_National_Park,_Sweden_(by_Pudelek).jpg>) — Pudelek | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2015-07-16 |
+| snow-04 | [Palo Alto Baylands January 2013 001.jpg](<https://commons.wikimedia.org/wiki/File:Palo_Alto_Baylands_January_2013_001.jpg>) — King of Hearts | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2015-05-27 |
+| snow-05 | [Black sand beach north of Kaikoura, Canterbury, New Zealand.jpg](<https://commons.wikimedia.org/wiki/File:Black_sand_beach_north_of_Kaikoura,_Canterbury,_New_Zealand.jpg>) — Michal Klajban | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-07-14 |
+| snow-06 | [Angelus Hut in the winter, Nelson Lakes National Park, New Zealand.jpg](<https://commons.wikimedia.org/wiki/File:Angelus_Hut_in_the_winter,_Nelson_Lakes_National_Park,_New_Zealand.jpg>) — Michal Klajban | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-08-24 |
+| snow-07 | [Baikal ice on sunset.jpg](<https://commons.wikimedia.org/wiki/File:Baikal_ice_on_sunset.jpg>) — Sergey Pesterev | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-06-14 |
+| snow-08 | [2015 Kwiatostan gruszy pospolitej.jpg](<https://commons.wikimedia.org/wiki/File:2015_Kwiatostan_gruszy_pospolitej.jpg>) — Jacek Halicki | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2015-05-07 |
+| hemianopia-01 | [2014 Track on Fremington Edge.jpg](<https://commons.wikimedia.org/wiki/File:2014_Track_on_Fremington_Edge.jpg>) — Kreuzschnabel | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2014-10-13 |
+| hemianopia-02 | [2013 Cogden Bridge.jpg](<https://commons.wikimedia.org/wiki/File:2013_Cogden_Bridge.jpg>) — Kreuzschnabel | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2016-05-28 |
+| hemianopia-03 | [2014 Yorkshire Dales country road Swaledale Askrigg.jpg](<https://commons.wikimedia.org/wiki/File:2014_Yorkshire_Dales_country_road_Swaledale_Askrigg.jpg>) — Kreuzschnabel | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2014-10-21 |
+| hemianopia-04 | [Mystic Beach, Vancouver Island, Canada 10.jpg](<https://commons.wikimedia.org/wiki/File:Mystic_Beach,_Vancouver_Island,_Canada_10.jpg>) — Michal Klajban | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2018-07-08 |
+| hemianopia-05 | [ARG-2016-Aerial-Tierra del Fuego (Ushuaia)–Valle Carbajal 01.jpg](<https://commons.wikimedia.org/wiki/File:ARG-2016-Aerial-Tierra_del_Fuego_(Ushuaia)%E2%80%93Valle_Carbajal_01.jpg>) — Godot13 | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2020-08-22 |
+| hemianopia-06 | [21-224-5054 NNP Synevyr RB 18.jpg](<https://commons.wikimedia.org/wiki/File:21-224-5054_NNP_Synevyr_RB_18.jpg>) — Rbrechko | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2018-05-26 |
+| hemianopia-07 | [Dülmen, Börnste, Waldweg -- 2015 -- 4649.jpg](<https://commons.wikimedia.org/wiki/File:D%C3%BClmen,_B%C3%B6rnste,_Waldweg_--_2015_--_4649.jpg>) — Dietmar Rabich | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2017-09-19 |
+| hemianopia-08 | [Berchtesgaden 02.jpg](<https://commons.wikimedia.org/wiki/File:Berchtesgaden_02.jpg>) — Dmytro Balkhovitin | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2020-06-06 |
+| normal-01 | [1 lake louise pano 2019.jpg](<https://commons.wikimedia.org/wiki/File:1_lake_louise_pano_2019.jpg>) — Chensiyuan | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-07-16 |
+| normal-02 | [1 tianzishan wulingyuan zhangjiajie 2012.jpg](<https://commons.wikimedia.org/wiki/File:1_tianzishan_wulingyuan_zhangjiajie_2012.jpg>) — chensiyuan | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2014-08-26 |
+| normal-03 | [Bois Raquet, in the High Fens – Eifel Nature Park (DSCF6655).jpg](<https://commons.wikimedia.org/wiki/File:Bois_Raquet,_in_the_High_Fens_%E2%80%93_Eifel_Nature_Park_(DSCF6655).jpg>) — Trougnouf (Benoit Brummer) | [CC BY 4.0](<https://creativecommons.org/licenses/by/4.0>) | 2020-10-04 |
+| normal-04 | [2019 - Nationalpark Jasmund - 01.jpg](<https://commons.wikimedia.org/wiki/File:2019_-_Nationalpark_Jasmund_-_01.jpg>) — Moahim | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2019-05-22 |
+| normal-05 | [Gentau Pic du Midi Ossau.jpg](<https://commons.wikimedia.org/wiki/File:Gentau_Pic_du_Midi_Ossau.jpg>) — Myrabella | [CC BY-SA 3.0](<https://creativecommons.org/licenses/by-sa/3.0>) | 2010-08-28 |
+| normal-06 | [Baobab (Adansonia digitata), parque nacional Makgadikgadi Pans, Botsuana, 2018-07-30, DD 03-08 PAN.jpg](<https://commons.wikimedia.org/wiki/File:Baobab_(Adansonia_digitata),_parque_nacional_Makgadikgadi_Pans,_Botsuana,_2018-07-30,_DD_03-08_PAN.jpg>) — Diego Delso | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2018-12-08 |
+| normal-07 | [Overgrown dead tree stumps 15.jpg](<https://commons.wikimedia.org/wiki/File:Overgrown_dead_tree_stumps_15.jpg>) — Dominicus Johannes Bergsma | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2018-06-01 |
+| normal-08 | [Côte d'Albâtre à l´Aiguille de Belval.jpg](<https://commons.wikimedia.org/wiki/File:C%C3%B4te_d%27Alb%C3%A2tre_%C3%A0_l%C2%B4Aiguille_de_Belval.jpg>) — Jörg Braukmann | [CC BY-SA 4.0](<https://creativecommons.org/licenses/by-sa/4.0>) | 2020-04-22 |
+
+## Research
+
+The short factual fragments use NEI information on myopia, astigmatism and colour-vision differences; RNIB information on field loss; Puledda et al.’s 2020 Visual Snow clinical series; and Holden et al.’s 2016 myopia model. The model’s 2020 and 2050 figures are labelled projections. Experiential observations and questions are editorial prompts, not clinical claims. All research links are exposed in ABOUT.

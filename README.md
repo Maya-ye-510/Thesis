@@ -20,7 +20,7 @@ Then visit `http://localhost:4190`.
 2. Read the introduction and select **Click To Start**.
 3. Choose at least one personal condition. **Normal** is exclusive; Myopia, Color Blind, Astigmatism, Visual Snow, and Hemianopia can be combined. Clicking a colour-vision or visual-field illustration opens its blue-bordered side menu and turns the arrow right. The category is selected only after choosing a subtype. Escape cancels the open menu. Clicking any confirmed illustration again removes that condition, including Normal. The category arrow can still reopen its subtype menu. Selected names retain their original size and turn blue; subtype captions use 12px blue text. Next Page shows a yellow reminder if nothing is selected.
 4. Select **Next Page** to enter the blue particle field. The upper-left list shows the chosen conditions and subtypes.
-5. Choose **Crop the world in your eyes**, move the portrait frame, resize it from any corner, and confirm **Use this frame**. The selected view moves into the result page beside the original anatomical eye artwork. The result is always frozen after cropping, regardless of the Motion setting in the field. Particles, visual-snow grain and floaters stop automatically. Dragging still rotates the captured world manually, with zoom locked. A single symptom is centred on the dotted line.
+5. Choose **Next**, move the portrait frame, resize it from any corner, and confirm **Sure**. The selected view moves into the result page beside the original anatomical eye artwork. The coloured world is always frozen after cropping, regardless of the Motion setting in the field. Visual-snow grain and floaters keep their independent motion. Dragging still rotates the captured world manually, with zoom locked. A single symptom is centred on the dotted line.
 6. Click a symptom to open its explanation: the cropped world moves left and the eye diagram opens into its side profile. The particle conditions stay unchanged. Click the heading again or press Escape to return to the result.
 
 In the field:
@@ -31,7 +31,7 @@ In the field:
 - Focus the field and use **Left / Right** to rotate, **Up / Down** or **+ / −** to change distance, and **Home** to reset the view.
 - **Structure** reveals connections and emphasizes outlines.
 - **Colors** enables evolving palette changes.
-- **Motion** pauses the scene particles when selected; press it again to resume. Visual Snow keeps flickering and its translucent floaters keep drifting while the world is paused. Cropped results freeze both the world and the visual overlay. All three lower controls start unselected on entering the field. Base drift is moderately faster; manual rotation and camera travel continue to work while paused.
+- **Motion** pauses the scene particles when selected; press it again to resume. Visual Snow keeps flickering and its translucent floaters keep drifting while the world is paused. Cropped results freeze the coloured world while the visual overlay continues. All three lower controls start unselected on entering the field. Base drift is moderately faster; manual rotation and camera travel continue to work while paused.
 - **Back** is the only in-field control that returns to the condition selector. The lower-left eye/music control is a reserved placeholder and does not navigate.
 - Clicking the grey surround keeps the current page open. Navigation uses the explicit buttons.
 - Returning to the home screen clears all personal conditions and restores default display controls, focus distance, rotation, tilt, and animation time for a fresh round.
@@ -78,7 +78,10 @@ Condition selections stay in memory for the current page session. They are not s
 - `flow-state.js` — subtype selection, crop constraints, and preservation of the selected projection.
 - `flow.css` — updated Figma layouts and motion for pages 3–5.
 - `refinements.css` — symptom previews, side menus, pupil growth transition, result controls, and explanation layout/motion.
-- `condition-notes.js` — concise condition explanations and interpretation prompts for page 6.
+- `information-content.js` — eight unique photographic studies and sixteen short text fragments per condition.
+- `information-layout.js` — separate editorial placements per condition, collision avoidance and responsive loop geometry.
+- `information.js` / `information.css` — endless information-page scrolling, typography and photo/diagram interaction.
+- `photography.js` — author, original URL, licence, crop dimensions and depth masks for all 48 photographs.
 - `condition-artwork.js` — original new condition SVGs with stable motion keys.
 - `control-artwork.js` — original SVG variants with stable vector keys for geometry interpolation.
 - `particle-field.js` — interactive canvas field and its rendering lifecycle.
@@ -115,3 +118,15 @@ The app itself does not require Node.js. No dependencies need to be installed to
 ## Repository hygiene
 
 `.gitignore` excludes credentials, `.env` files, private keys, deployment-local configuration, dependency caches, reference videos, archives, editor files, and generated QA artifacts. There are no API keys or deployment credentials required by this project. No automatic deployment workflow is included.
+
+
+## Current Figma information pages
+
+- Fixed translucent header, 42 px Hubot brand / 20 px ABOUT at the 1421 × 832 reference size, responsive typography, and the supplied eye favicon. Existing home/intro iris enlargement and geometric framing motion remain.
+- Experience panel: x63 / y101 / 1294 × 597. Next expands the crop mark into the proportional selection in 300 ms ease-in-out; Sure captures it. The result window uses the revised 466:637 ratio and has Back / Next navigation.
+- Information: a fixed condition title, 8 unique photographs and 16 independent short text blocks for each condition. Pictures, prose and data use different editorial coordinates in each collection; text is not attached below each photograph. The 6200-unit cycle is over 2.5 times the previous length. Body, aside, data-caption and source text use 16 CSS pixels; numeric displays use 64 CSS pixels on desktop and mobile; these sizes are compensated for the artwork transform. A smaller eye diagram remains in the lower right. Content crossing the title softens. Mobile preserves reading sizes and rearranges the fragments into a longer sequence.
+- Hover or keyboard-focus a photograph to interpolate the optical diagram over 450 ms. Myopia examples preserve individually masked sharp foregrounds while defocusing distant scenery; astigmatism examples vary directional focus spread. Acuity numbers do not map uniquely to a prescription, so these are qualitative illustrations rather than calibrated 20/100 or 20/200 simulations.
+- Cropping pauses the coloured world clock for every condition. Visual Snow retains its independent perception clock: static and translucent floaters continue after cropping, as requested in this revision. Reduced-motion preferences still take precedence.
+- ABOUT includes photographer attribution, licences and research links. See [photography provenance](assets/nov10/PHOTOGRAPHY.md) for original files and the processing record. No AI imagery is used.
+
+Validation: `node --check` on application scripts; `node --test tests/*.test.cjs`. Browser QA covers home → conditions → experience → crop → result → information, bidirectional wrapping, photograph/diagram focus, pause/crop clock separation, navigation/reset, and 390 × 844 / 1280 × 720 layouts.

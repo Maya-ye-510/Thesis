@@ -77,7 +77,7 @@
     }
     restoreState(state, lens = null) {
       this.camera = { ...state.camera }; this.target = { ...state.camera }; this.originPose = { ...state.camera };
-      this.time = state.time;this.snowTime=state.snowTime??state.snowView?.time??state.time; this.focus = state.focus; this.particleLimit = state.particleLimit;
+      this.time = state.time;this.snowTime=state.snowView?.time??state.snowTime??state.time; this.focus = state.focus; this.particleLimit = state.particleLimit;
       this.lens = lens; this.lastPresentedState = null; this.history = [];
       this.snowGaze={x:0,y:0,yaw:state.camera.yaw,pitch:state.camera.pitch,...state.snowGaze};this.frozenSnow=this.freezePerception&&state.snowView?state.snowView:null;
       this.setConditions(state.conditions); this.setDetails(state.details); this.setControls(state.controls); this.setPaused(state.paused);
@@ -193,6 +193,7 @@
       if (animate || unsettled) this.historyUntil = timestamp + 320;
       this.draw(timestamp);
       this.canvas.dataset.motion = animate ? 'running' : 'paused';
+      this.canvas.dataset.worldTime=this.time.toFixed(3);this.canvas.dataset.perceptionTime=(this.snowTime??this.time).toFixed(3);
       if (animate || animateSnow || unsettled || (this.conditions.has('snow') && !this.reduced.matches && timestamp < this.historyUntil)) this.request();
     }
     draw(timestamp) {

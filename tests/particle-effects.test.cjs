@@ -93,8 +93,14 @@ test('Motion pauses world particles while Visual Snow continues on its independe
   Object.assign(field,{active:true,width:1000,paused:true,freezePerception:false,reduced:{matches:false},camera:{yaw:0,pitch:0,zoom:0},target:{yaw:0,pitch:0,zoom:0},time:7,snowTime:10,last:1000,conditions:new Set(['snow']),snowGaze:{x:0,y:0,yaw:0,pitch:0},canvas:{dataset:{}},draw(){},request(){requests++;}});
   field.frame(1050);assert.equal(field.time,7);assert.ok(field.snowTime>10);assert.ok(requests>0);
 });
-test('A cropped result freezes both clocks and stops requesting continuous snow frames', () => {
+test('The optional fully frozen perception mode stops both clocks', () => {
   const field=fieldPrototype();let requests=0;
   Object.assign(field,{active:true,width:1000,paused:true,freezePerception:true,reduced:{matches:false},camera:{yaw:0,pitch:0,zoom:0},target:{yaw:0,pitch:0,zoom:0},time:7,snowTime:10,last:1000,historyUntil:0,conditions:new Set(['snow']),snowGaze:{x:0,y:0,yaw:0,pitch:0},canvas:{dataset:{}},draw(){},request(){requests++;}});
   field.frame(1050);assert.equal(field.time,7);assert.equal(field.snowTime,10);assert.equal(requests,0);
+});
+
+test('The cropped result preserves the displayed overlay clock while freezing only the world',()=>{
+ const field=fieldPrototype();Object.assign(field,{freezePerception:false,canvas:{dataset:{}},setConditions(v){this.conditions=new Set(v);},setDetails(){},setControls(){},setPaused(v){this.paused=v;},updateRotation(){}});
+ field.restoreState({camera:{yaw:0,pitch:0,zoom:0},time:8,snowTime:8,snowView:{time:8.14,camera:{yaw:0,pitch:0,zoom:0},gaze:{x:0,y:0}},focus:.5,conditions:['snow'],details:{},controls:{},paused:true});
+ assert.equal(field.time,8);assert.equal(field.snowTime,8.14);assert.equal(field.paused,true);assert.equal(field.frozenSnow,null);
 });

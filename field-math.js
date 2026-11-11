@@ -61,10 +61,11 @@
     }
     return edge.x+(edge.left?-1:1)*Math.min(edge.maxBulge??110,bulge);
   }
-  function focusRays(progress){
-    const t=clamp(progress,0,1),lerp=(a,b)=>a+(b-a)*t;
-    return [[lerp(0,58),lerp(411,356),869,lerp(411,356),1361,lerp(411,423),lerp(1421,1361),lerp(411,423)],
-      [lerp(0,58),lerp(411,476),lerp(869,872),lerp(411,476),1361,lerp(411,423),lerp(1421,1361),lerp(411,423)]];
+  function focusRays(progress,focus=.55,spread=1){
+    const t=clamp(progress,0,1),f=clamp(focus,0,1),target=1383-f*210;
+    const end=[[80,598,1005,598,target,658,1421,658+35*f*spread],[80,718,1005,718,target,658,1421,658-35*f*spread]];
+    const start=[0,428,869,428,1361,428,1421,428];
+    return end.map(points=>points.map((value,i)=>start[i]+(value-start[i])*t));
   }
   function anatomyLook(pointerY,centerY,height){return clamp((centerY-pointerY)/Math.max(1,height)*6,-2.8,2.8);}
   function snowSeed(time,yaw=0,pitch=0){return Math.floor(time*12)+Math.floor(yaw*89)*131+Math.floor(pitch*103)*197;}

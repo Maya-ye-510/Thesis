@@ -86,14 +86,13 @@ test('A touching scene particle bends the boundary into the missing region and l
   assert.ok(Math.abs(fieldBoundary(300,left,[{...particle,x:900}])-500)<1e-5);
 });
 
-test('Focus rays share one baseline, split continuously, and reach the explanation geometry', () => {
+test('Focus rays travel from a shared result line into the lower-right information diagram', () => {
   const {focusRays}=require('../field-math.js');
-  const [startA,startB]=focusRays(0);assert.deepEqual(startA,startB);
-  assert.ok(startA.filter((_,i)=>i%2).every(y=>y===411));
-  const [middleA,middleB]=focusRays(.5);
-  assert.ok(middleA[1]>356&&middleA[1]<411);assert.ok(middleB[1]>411&&middleB[1]<476);
-  const [endA,endB]=focusRays(1);assert.equal(endA[1],356);assert.equal(endB[1],476);
-  assert.equal(endA[5],423);assert.equal(endB[5],423);
+  const [a,b]=focusRays(0);assert.deepEqual(a,b);assert.ok(a.filter((_,i)=>i%2).every(y=>y===428));
+  const [upper,lower]=focusRays(1,.3);assert.equal(upper[1],598);assert.equal(lower[1],718);assert.equal(upper[5],658);assert.equal(lower[5],658);
+  const mid=focusRays(.5,.3);assert.equal(mid[0][1],(428+598)/2);assert.equal(mid[1][1],(428+718)/2);
+  assert.ok(focusRays(1,.9)[0][4]<focusRays(1,.3)[0][4],'Stronger illustrative defocus shifts the focus forward');
+  assert.ok(focusRays(1,.5,2)[0][7]>focusRays(1,.5,1)[0][7],'Uneven focus broadens the light spread');
 });
 test('The yellow eye looks up/down through a restrained rotation around a fixed pivot', () => {
   const {anatomyLook}=require('../field-math.js');

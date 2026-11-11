@@ -16,8 +16,8 @@
     entries(){return CONDITIONS.filter(c=>this.selected.has(c.id)).map(c=>({...c,detail:c.options?.find(o=>o.value===this.details[c.id])?.label||''}));}
     reset(){this.selected.clear();this.details={colour:'deutan',hemianopia:'left'};}
   }
-  const CROP_ASPECT=466/662;
-  function initialCrop(bounds){const height=Math.min(bounds.height*.8,bounds.width*.8/CROP_ASPECT);const width=height*CROP_ASPECT;return{x:(bounds.width-width)/2,y:(bounds.height-height)/2,width,height};}
+  const CROP_ASPECT=466/637;
+  function initialCrop(bounds){const height=Math.min(bounds.height*.65,bounds.width*.8/CROP_ASPECT);const width=height*CROP_ASPECT;return{x:Math.min(bounds.width*.278,bounds.width-width),y:Math.min(bounds.height*.129,bounds.height-height),width,height};}
   function moveCrop(rect,dx,dy,bounds){return{...rect,x:clamp(rect.x+dx,0,Math.max(0,bounds.width-rect.width)),y:clamp(rect.y+dy,0,Math.max(0,bounds.height-rect.height))};}
   function resizeCrop(rect,dx,dy,corner,bounds){
     const sx=corner.includes('w')?-1:1,sy=corner.includes('n')?-1:1;
