@@ -1,0 +1,59 @@
+/* November 12 connected Figma flow: Analyze → selected perspectives. */
+#crop-frame{outline-color:#ffe96d}#crop-frame:after{color:#ffe96d}.crop-handle{border-color:#ffe96d}
+#result-symptoms,.previous-eye,#optical-caption{display:none!important}
+.nov12-anatomy{position:absolute;left:0;top:0;overflow:visible}
+.analysis-prompt{transition:opacity 500ms ease-in-out;position:absolute;left:39.48%;top:44.23%;width:27.8%;z-index:3}
+.analysis-prompt>p{font:500 16px/1.4 Manrope;min-height:calc(62px * var(--flow-scale,1));margin:0 0 calc(28px * var(--flow-scale,1))}
+#start-analysis{position:relative;display:flex;align-items:center;justify-content:center;text-align:center;width:75.7%;height:calc(64px * var(--flow-scale,1));min-height:48px;margin:0 auto;background:#000;color:#fff;font:600 28px/1 Hubot;transition:color 450ms ease-in-out,background 450ms ease-in-out}
+#start-analysis:before,#start-analysis:after{content:'';position:absolute;top:12.5%;bottom:15.6%;width:7px;background:#ffe96d;transition:width 450ms ease-in-out}
+#start-analysis:before{left:3%}#start-analysis:after{right:3.3%}#start-analysis:hover:before,#start-analysis:hover:after{width:12px}
+#analysis-progress{display:block;margin:0 auto;width:100%;height:66px;transform:translateX(calc(-27px * var(--flow-scale,1)));margin-top:calc(-12px * var(--flow-scale,1));font:300 64px/1.04 Manrope;text-align:center;letter-spacing:-.045em}
+#analysis-progress[hidden]{display:none}
+.is-analyzing #start-analysis{display:none}
+.analysis-halos{position:absolute;inset:0;pointer-events:none;z-index:0;transition:opacity 500ms ease-in-out}
+.analysis-halo{position:absolute;width:0;height:0}.analysis-halo svg{position:absolute;max-width:none;transform:scale(var(--flow-scale,1));transform-origin:0 0}
+.analysis-halo.cyan{left:calc(478px * var(--flow-scale,1));top:calc(430px * var(--flow-scale,1))}
+.analysis-halo.blue{left:calc(657px * var(--flow-scale,1));top:calc(295px * var(--flow-scale,1))}
+.analysis-halo.yellow{left:calc(501px * var(--flow-scale,1));top:0}
+#result .result-window{width:calc(76.5625dvh * 445 / 637);aspect-ratio:445/637}
+.is-explaining .analysis-prompt,.is-explaining .analysis-halos,.is-explaining .result-artwork{opacity:0;pointer-events:none}
+.is-explaining .result-artwork{visibility:hidden}
+#result.is-explaining .result-window{left:-22.5194%;width:calc(76.5625dvh * 466 / 637);aspect-ratio:466/637;transition:left 500ms ease-in-out,width 500ms ease-in-out}
+.is-explaining .condition-explanation{left:0;top:0;inset:0;width:100%;height:100%;pointer-events:none;z-index:3;overflow:hidden}
+.is-explaining #information-scroll{position:absolute;left:15.34%;right:0;top:56px;bottom:0;overflow-x:hidden;overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;mask-image:none;pointer-events:auto;scrollbar-width:thin;scrollbar-color:#aaa transparent}
+#information-track{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important;transform:none!important;padding:calc(86px * var(--flow-scale,1)) 5.06vw 50px 4.22vw;box-sizing:border-box}
+.perspective-section{position:relative;padding-bottom:calc(95px * var(--flow-scale,1));margin-bottom:calc(55px * var(--flow-scale,1));border-bottom:1px dotted #acacac;}
+.perspective-section:last-of-type{border:0;margin-bottom:0;padding-bottom:calc(90px * var(--flow-scale,1))}
+.perspective-section h2{font:500 24px/1.4 Manrope;margin:0;}
+.perspective-subtype{position:static!important;width:auto!important;font:500 16px/1.4 Manrope;margin:8px 0 0;color:#3e7eff}
+.perspective-introduction{display:grid;grid-template-columns:1fr 1fr;gap:2.6vw;margin-top:calc(50px * var(--flow-scale,1))}
+.perspective-introduction p{position:static!important;width:auto!important;font:500 16px/1.4 Manrope;margin:0;background:transparent}
+.perspective-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3.94vw;align-items:end;margin:-19px 8px 0 3px}
+.perspective-card{position:relative;padding:0;width:100%;aspect-ratio:316/224;border:0;background:transparent;text-align:left;overflow:visible;outline-offset:5px}
+.perspective-card.structure{aspect-ratio:317/297}
+.perspective-card>.art-state{inset:0;transition:none}
+.perspective-vector{position:absolute;left:0;top:0;transform:scale(var(--card-scale,1));transform-origin:0 0;display:block}
+.perspective-card-copy{position:absolute;left:10px;right:10px;top:36px;max-height:calc(100% - 43px);overflow-y:auto;scrollbar-width:thin;font:500 calc(16px * var(--card-scale,1))/normal Manrope;opacity:0;transform:translateY(8px);transition:opacity 500ms ease-in-out,transform 500ms ease-in-out;pointer-events:none;color:#111}
+.structure .perspective-card-copy{top:calc(72px * var(--card-scale,1) + 36px);max-height:calc(100% - 72px * var(--card-scale,1) - 44px)}
+.perspective-card.is-hover .perspective-card-copy{opacity:1;transform:none;pointer-events:auto}
+.perspective-spine{display:none;position:absolute;left:15.34%;top:calc(155px * var(--flow-scale,1));bottom:5%;border-left:1px dotted #acacac;z-index:4;pointer-events:none}
+.is-explaining .perspective-spine{display:block}
+.perspective-spine>img{position:absolute;left:calc(-40px * var(--flow-scale,1));top:calc(-34px * var(--flow-scale,1));width:calc(81px * var(--flow-scale,1));height:auto}
+.perspective-marker{position:absolute;top:calc(-28.5px * var(--flow-scale,1));left:calc(-23.5px * var(--flow-scale,1));width:calc(47px * var(--flow-scale,1));height:calc(47px * var(--flow-scale,1));background:url('assets/nov9/anatomy/5d732.svg') center/contain no-repeat}
+.perspective-marker:before{content:'';position:absolute;inset:calc(2px * var(--flow-scale,1));background:url('assets/nov9/anatomy/fdfd6.svg') center/contain no-repeat}
+.perspective-end{display:flex;justify-content:flex-end;padding-right:12px}
+.report-control{font:500 16px/1.4 Manrope;color:#000;opacity:1;cursor:default}.report-control span{color:#3e7eff;margin-left:18px}
+.is-explaining .result-navigation{z-index:5;pointer-events:none}.is-explaining .result-navigation .back{pointer-events:auto}
+@media(max-width:900px){.perspective-introduction{gap:24px}.perspective-cards{gap:20px}.perspective-card-copy{top:30px}.structure .perspective-card-copy{top:calc(72px * var(--card-scale,1) + 30px)}}
+@media(max-width:700px){
+ .analysis-prompt{left:36%;top:38%;width:58%}.analysis-prompt>p{font-size:16px}.analysis-halos{opacity:.7}.analysis-halo.cyan{top:56%;left:30%}.analysis-halo.blue{top:40%;left:55%}.analysis-halo.yellow{top:12%;left:40%}
+ #result .result-window{left:5%;top:12%;height:64%;width:28%;aspect-ratio:auto}.analysis-prompt #start-analysis{width:100%;font-size:26px}
+ .is-explaining #information-scroll{left:12%;top:44px}#result.is-explaining .result-window{left:-44%;width:50%;height:66%;top:14%}
+ #information-track{padding:44px 20px 60px 22px}.perspective-section h2{font-size:24px}.perspective-introduction{grid-template-columns:1fr;gap:20px;margin-top:26px}
+ .perspective-cards{grid-template-columns:1fr;gap:30px;margin:30px 0 0}.perspective-card{max-width:360px}.perspective-section{padding-bottom:45px;margin-bottom:40px}
+ .perspective-spine{left:12%;top:100px}.perspective-spine>img{width:42px;left:-21px;top:-20px}.perspective-marker{width:26px;height:26px;left:-13px;top:-13px}
+ .report-control{font-size:16px}.perspective-end{padding:0}.is-explaining .result-navigation .back{font-size:13px;left:8px;bottom:16px}
+}
+@media(prefers-reduced-motion:reduce){.perspective-card-copy,.analysis-halos,#result.is-explaining .result-window{transition:none}}
+
+@media(min-width:701px){#result:not(.is-explaining) .result-navigation .forward{left:31.4567%;gap:calc(4px * var(--flow-scale,1))}}

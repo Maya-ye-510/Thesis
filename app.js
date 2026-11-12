@@ -13,7 +13,9 @@ $$('#home img[data-node-id="167:157"],#home img[data-node-id="167:156"]').forEac
 const homeRule=document.createElement('div');homeRule.className='home-rule';homeRule.append($('#home img[data-node-id="166:148"]'));$('#home').append(homeRule);
 const field=new ParticleField($('#particle-canvas'));
 const resultField=new ParticleField($('#result-canvas'));resultField.lockZoom=true;resultField.freezePerception=false;
-const information=new SeeingInformation($('#information-scroll'),setInformationOptics);
+const information=new PerspectiveInformation($('#information-scroll'));
+addEventListener('perspective-resize',()=>information.paint());
+let analysisRAF=0,analysisTimer=0,analysisRevision=0;
 let informationOptics={focus:.55,spread:1,label:''},opticsRAF=0;
 $$('[data-about]').forEach(b=>b.onclick=()=>$('#about-dialog').showModal());
 $('#about-close').onclick=()=>$('#about-dialog').close();
@@ -31,15 +33,15 @@ function sizeArtwork(){
 new ResizeObserver(sizeArtwork).observe($('.intro-graphic'));new ResizeObserver(sizeArtwork).observe($('#condition-options'));addEventListener('resize',sizeArtwork);
 
 function updateScreen(name,replace){
- screen=name;if(name!=='conditions')closeDetails();$$('.screen').forEach(el=>{el.hidden=el.id!==(name==='detail'?'result':name);el.classList.remove('entering');});
- document.title='I SEE — '+({home:'Prototype 2',intro:'About',conditions:'Personal condition',experience:'Experience',result:'The world in your eyes',detail:'Ways of seeing'})[name];
+ screen=name;if(name!=='conditions')closeDetails();if(name!=='result')cancelAnalysis(false);$$('.screen').forEach(el=>{el.hidden=el.id!==(name==='detail'?'result':name);el.classList.remove('entering');});
+ document.title='I SEE — '+({home:'Prototype 2',intro:'About',conditions:'Personal condition',experience:'Experience',result:'Analyze your perspective',detail:'Ways of seeing'})[name];
  if(replace)history.replaceState({screen:name},'','#'+name);else if(location.hash!=='#'+name)history.pushState({screen:name},'','#'+name);
  field.setActive(name==='experience');const showResult=name==='result'||name==='detail';if(resultField.active!==showResult)resultField.setActive(showResult);
- $('#result').classList.toggle('is-explaining',name==='detail');$('.condition-explanation').hidden=name!=='detail';information.setActive(name==='detail');$('#optical-caption').hidden=name!=='detail';$('#result-next').hidden=name==='detail';
+ $('.analysis-prompt').inert=name==='detail';$('.analysis-prompt').setAttribute('aria-hidden',name==='detail');$('#result').classList.toggle('is-explaining',name==='detail');$('.condition-explanation').hidden=name!=='detail';information.setActive(name==='detail');$('#optical-caption').hidden=name!=='detail';$('#result-next').hidden=name==='detail';
  $('#result').setAttribute('aria-label',name==='detail'?'Condition explanation':'The world in your eyes');
  $$('.result-symptom').forEach(b=>{const hidden=name==='detail'&&b.dataset.symptom!==comparing;b.inert=hidden;b.setAttribute('aria-hidden',hidden);});
  $('.result-window>p').setAttribute('aria-hidden',name==='detail');
- if(name==='result'&&capture){comparing=null;renderSymptoms();}
+ if(name==='result'&&capture){comparing=null;renderSymptoms();cancelAnalysis(true);}
  if(name==='home')resetExperience();
  if(name==='experience'){$('#experience-next .next-label').textContent='Next';Object.assign(controls,{structure:false,colors:false,motion:false});field.setPaused(false);updateConditions();updateControls();}
  if(name!=='experience'){cropping=false;$('#experience-next .next-label').textContent='Next';$('#crop-frame').hidden=true;$('#crop-actions').hidden=true;$('.blue-panel').classList.remove('is-cropping');}
@@ -54,12 +56,10 @@ async function go(name,replace=false,immediate=false){
  if(name===screen&&!immediate)return;
  if(transition)transition.skipTransition();
  if((screen==='result'&&name==='detail')||(screen==='detail'&&name==='result')){
-  const id=comparing,button=$(`[data-symptom="${id}"]`),boxes=button?[...button.querySelectorAll('.symptom-dot,.symptom-label')].map(el=>el.getBoundingClientRect()):[];
-  document.documentElement.dataset.pageMotion='result-detail';updateScreen(name,replace);animateFocusLines(name==='detail');textEntrances.forEach(a=>a.cancel());textEntrances=[];
-  const next=$(`[data-symptom="${id}"]`);
-  if(!reduceMotion.matches&&next){next.querySelectorAll('.symptom-dot,.symptom-label').forEach((el,i)=>{const from=boxes[i],to=el.getBoundingClientRect();if(from&&to.width)el.animate([{transform:`translate(${from.x-to.x}px,${from.y-to.y}px)`},{transform:'none'}],{duration:700,easing:'ease-in-out'});});
-   if(name==='detail'){const text=$('.condition-explanation'),travel=innerHeight-text.getBoundingClientRect().top+24;textEntrances.push(text.animate([{opacity:0,transform:`translateY(${travel}px)`},{opacity:1,transform:'none'}],{duration:700,easing:'ease-in'}));}
-  }return;
+  document.documentElement.dataset.pageMotion='result-detail';updateScreen(name,replace);
+  textEntrances.forEach(a=>a.cancel());textEntrances=[];
+  if(name==='detail'&&!reduceMotion.matches){textEntrances.push($('.condition-explanation').animate([{opacity:0,transform:'translateX(45px)'},{opacity:1,transform:'none'}],{duration:500,easing:'ease-in-out'}));}
+  return;
  }
  const motion=name==='home'?'dissolve':screen==='home'&&name==='intro'?'home-intro':screen==='intro'&&name==='conditions'?'intro-conditions':screen==='experience'&&name==='result'?'crop-result':'click';
  document.documentElement.dataset.pageMotion=motion;
@@ -95,7 +95,7 @@ function animateArtwork(button, click = false) {
   button.dataset.artState = state;
   button.querySelectorAll('.art-state').forEach(layer => { layer.style.opacity = layer === target ? '1' : '0'; });
   if (reduceMotion.matches) return;
-  const timing = { duration: click ? 300 : button.matches('[data-condition]') ? 700 : 450, easing: click ? 'ease-in' : 'ease-in-out' };
+  const timing = { duration: button.matches('[data-perspective-card]') ? 500 : click ? 300 : button.matches('[data-condition]') ? 700 : 450, easing: click ? 'ease-in' : 'ease-in-out' };
   const animate=(el,frames)=>{const animation=el.animate(frames,timing);owned.push(animation);};
   const inverse = (from, to, svg) => {
     const units = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
@@ -200,14 +200,25 @@ function renderSymptoms(){
 }
 async function openExplanation(id){
  if(!capture||!capture.entries.some(c=>c.id===id))return;
- comparing=id;information.show(id,capture.details);
- $$('[data-symptom]').forEach(b=>b.classList.toggle('is-explained',b.dataset.symptom===id));
- await go('detail');$(`[data-symptom="${id}"]`).setAttribute('aria-expanded','true');
- $('#result-announcement').textContent=CONDITIONS.find(c=>c.id===id).name+' — ways of seeing';
+ comparing=id;information.show(capture.entries,capture.details);await go('detail');
+ $('#result-announcement').textContent='Your selected perspectives are ready';
 }
+function cancelAnalysis(reset){
+ analysisRevision++;cancelAnimationFrame(analysisRAF);clearTimeout(analysisTimer);analysisRAF=analysisTimer=0;
+ if(reset){$('#result').classList.remove('is-analyzing');$('#start-analysis').disabled=false;$('#analysis-progress').hidden=true;$('#analysis-progress').textContent='0%';$('#analysis-progress').setAttribute('aria-valuenow','0');$('#analysis-progress').dataset.phase='idle';}
+}
+function startAnalysis(){
+ if(!capture||screen!=='result'||$('#start-analysis').disabled)return;
+ cancelAnalysis(false);const token=analysisRevision,output=$('#analysis-progress');$('#start-analysis').disabled=true;$('#result').classList.add('is-analyzing');output.hidden=false;output.textContent='0%';output.setAttribute('aria-valuenow','0');output.dataset.phase='counting';const start=performance.now();output.dataset.startedAt=start.toFixed(1);
+ const tick=now=>{if(token!==analysisRevision||screen!=='result')return;const value=PerspectiveContent.progressAt(now-start);output.textContent=value+'%';output.setAttribute('aria-valuenow',value);
+  if(value<100){analysisRAF=requestAnimationFrame(tick);return;}
+  analysisRAF=0;output.dataset.phase='holding';output.dataset.completedAt=now.toFixed(1);analysisTimer=setTimeout(()=>{if(token!==analysisRevision||screen!=='result')return;output.dataset.phase='complete';output.dataset.transitionAt=performance.now().toFixed(1);openExplanation(capture.entries[0].id);},PerspectiveContent.hold);
+ };analysisRAF=requestAnimationFrame(tick);
+}
+$('#start-analysis').onclick=startAnalysis;
 $('#result').addEventListener('wheel',e=>{if(screen!=='detail'||e.ctrlKey||e.target.closest('#information-scroll'))return;e.preventDefault();information.scrollBy(e.deltaY*(e.deltaMode===1?18:e.deltaMode===2?innerHeight:1));},{passive:false});
 $('#result-back').onclick=()=>go(screen==='detail'?'result':'experience');
-$('#result-next').onclick=()=>capture&&openExplanation(capture.entries[0].id);
+$('#result-next').onclick=startAnalysis;
 $('#result-canvas').addEventListener('click',()=>{if(!capture||resultField.lastGestureMoved||screen!=='result')return;resultField.target.yaw+=Math.PI/6;resultField.updateRotation();resultField.request();});
 updateConditions();updateControls();
 // Eye movement is computed from the actual responsive element bounds.
