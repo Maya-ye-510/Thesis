@@ -10,7 +10,7 @@
     constructor(canvas, onDepth) {
       this.canvas = canvas; this.ctx = canvas.getContext('2d', { alpha: false }); this.onDepth = onDepth;
       this.camera = { yaw: 0, pitch: 0, zoom: 0 }; this.target = { ...this.camera }; this.focus = .35;
-      this.conditions = new Set(); this.controls = { structure: false, colors: false, motion: false }; this.paused = false;
+      this.tone=0;this.conditions = new Set(); this.controls = { structure: false, colors: false, motion: false }; this.paused = false;
       this.details = { colour: 'deutan', hemianopia: 'left' }; this.colourPalette = palette.map(c => visionColour(c));
       this.lens = null; this.lockZoom = false; this.particleLimit = 0; this.lastGestureMoved = false;
       this.reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -68,7 +68,7 @@
     }
     liveState() {
       return { camera: { ...this.camera }, target: { ...this.target }, time: this.time || 0, focus: this.focus,
-        conditions: [...(this.conditions || [])], details: { ...this.details }, controls: { ...this.controls }, paused: !!this.paused,
+        tone:this.tone||0, conditions: [...(this.conditions || [])], details: { ...this.details }, controls: { ...this.controls }, paused: !!this.paused,
         particleLimit: this.particleLimit || (this.width < 600 ? 2200 : 5400), lens: this.lens || null, snowTime:this.snowTime??this.time, snowGaze:{...this.snowGaze} };
     }
     captureState() {
@@ -80,13 +80,14 @@
       this.time = state.time;this.snowTime=state.snowView?.time??state.snowTime??state.time; this.focus = state.focus; this.particleLimit = state.particleLimit;
       this.lens = lens; this.lastPresentedState = null; this.history = [];
       this.snowGaze={x:0,y:0,yaw:state.camera.yaw,pitch:state.camera.pitch,...state.snowGaze};this.frozenSnow=this.freezePerception&&state.snowView?state.snowView:null;
-      this.setConditions(state.conditions); this.setDetails(state.details); this.setControls(state.controls); this.setPaused(state.paused);
+      this.setTone(state.tone||0);this.setConditions(state.conditions); this.setDetails(state.details); this.setControls(state.controls); this.setPaused(state.paused);
       this.updateRotation(); this.canvas.dataset.focus = this.focus.toFixed(3);
     }
     setControls(controls) {
       if (Object.keys(controls).some(key => controls[key] !== this.controls[key])) this.historyUntil = performance.now() + 320;
       Object.assign(this.controls, controls); this.request();
     }
+    setTone(value){this.tone=clamp(Number(value)||0,-1,1);this.history=[];this.lastPresentedState=null;if(this.canvas)this.canvas.dataset.tone=this.tone.toFixed(2);this.request();}
     setPaused(value) { this.paused = value; if(value)this.historyUntil=0;this.request(); }
     setFocus(value) {
       this.focus = clamp(value, 0, 1); this.target.zoom = focusZoom(this.focus);
@@ -128,7 +129,7 @@
     reset() {
       if (this.drag && this.canvas.hasPointerCapture(this.drag.id)) this.canvas.releasePointerCapture(this.drag.id);
       this.drag = null; this.camera = { yaw: 0, pitch: 0, zoom: 0 }; this.target = { ...this.camera };
-      this.time = 0; this.last = 0; this.history = []; this.historyUntil = 0; this.paused = false;
+      this.setTone(0);this.time = 0; this.last = 0; this.history = []; this.historyUntil = 0; this.paused = false;
       this.lens = null; this.particleLimit = 0; this.lastPresentedState = null;
       this.snowTime=0;this.snowGaze={x:0,y:0,yaw:0,pitch:0};this.frozenSnow=null;
       this.conditions.clear(); this.sprites.clear(); this.controls = { structure: false, colors: false, motion: false };
@@ -198,13 +199,14 @@
     }
     draw(timestamp) {
       const ctx = this.ctx, w = this.width, h = this.height, snow = this.conditions.has('snow');
-      ctx.globalAlpha = 1; ctx.fillStyle = '#2548c3'; ctx.fillRect(0, 0, w, h);
+      ctx.globalAlpha = 1; ctx.fillStyle = root.FieldMath.whiteBalance('#2548c3',this.tone); ctx.fillRect(0, 0, w, h);
       const l = this.lens, scale = l ? w * l.sizeRatio : 1;
       const glow = l ? ctx.createRadialGradient(w * l.centerX, (l.sourceHeight * .46 - l.crop.y) * scale, 5 * scale, w * l.centerX, (l.sourceHeight * .48 - l.crop.y) * scale, Math.max(l.sourceWidth, l.sourceHeight) * .7 * scale)
         : ctx.createRadialGradient(w * .5, h * .46, 5, w * .5, h * .48, Math.max(w, h) * .7);
-      glow.addColorStop(0, '#537cf0'); glow.addColorStop(.43, '#294ad1'); glow.addColorStop(1, '#152bac');
+      glow.addColorStop(0, root.FieldMath.whiteBalance('#537cf0',this.tone)); glow.addColorStop(.43, root.FieldMath.whiteBalance('#294ad1',this.tone)); glow.addColorStop(1, root.FieldMath.whiteBalance('#152bac',this.tone));
       ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
       this.sceneCtx.clearRect(0, 0, w, h); this.drawParticles(this.sceneCtx);
+      if(this.tone){this.sceneCtx.save();this.sceneCtx.globalCompositeOperation='source-atop';this.sceneCtx.globalAlpha=Math.abs(this.tone)*.18;this.sceneCtx.fillStyle=this.tone>0?'#ffd4a3':'#a6daff';this.sceneCtx.fillRect(0,0,w,h);this.sceneCtx.restore();}
       if (snow && !this.reduced.matches && !this.paused) this.drawDelayed(timestamp);
       else ctx.drawImage(this.scene, 0, 0, w, h);
       this.canvas.dataset.snowDelay = snow && !this.reduced.matches && !this.paused ? '130' : '0';

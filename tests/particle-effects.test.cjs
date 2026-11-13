@@ -15,6 +15,12 @@ function fieldPrototype() {
   vm.runInContext(fs.readFileSync(path.join(__dirname, '../particle-field.js'), 'utf8'), context);
   return Object.create(context.ParticleField.prototype);
 }
+test('A chosen tone survives capture and restore, including clearing delayed frames from the previous tone',()=>{
+ const setup=()=>{const field=fieldPrototype();Object.assign(field,{canvas:{dataset:{}},request(){},camera:{yaw:.4,pitch:.1,zoom:1},target:{yaw:.4,pitch:.1,zoom:1},conditions:new Set(['myopia']),details:{colour:'deutan'},controls:{motion:true},sprites:new Map(),time:3,focus:.7,width:1000,snowGaze:{x:0,y:0},history:[]});return field;};
+ const original=setup();original.lastPresentedState={tone:-.8};original.setTone(.64);assert.equal(original.lastPresentedState,null);
+ const snapshot=original.captureState();assert.equal(snapshot.tone,.64);
+ const restored=setup();restored.restoreState(snapshot);assert.equal(restored.tone,.64);assert.equal(restored.canvas.dataset.tone,'0.64');
+});
 test('Circles remain the dominant elements, with only a small minority of other geometry', () => {
   const field = fieldPrototype(); field.build();
   const circleTypes = new Set(['disc','ring','double-ring','halo','dashed-ring','arc','dot-ring']);

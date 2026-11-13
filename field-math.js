@@ -80,8 +80,19 @@
     return {x:cycle(p.x+p.vx*time+Math.sin(time*p.speed*.65+p.phase)*.035+gaze.x*(.45+Math.sin(p.phase)*.25)-camera.yaw*.004),
       y:cycle(p.y+p.vy*time+Math.cos(time*p.speed*.55+p.phase)*.04+gaze.y*(.45+Math.cos(p.phase)*.25)-camera.pitch*.006)};
   }
+  // A restrained photographic white balance, not a hue rotation.
+  function temperatureMatrix(value=0){
+    const tone=clamp(Number(value)||0,-1,1),a=Math.abs(tone),warm=tone>=0;
+    const gain=warm?[1+.18*a,1+.04*a,1-.14*a]:[1-.12*a,1+.02*a,1+.12*a];
+    const offset=warm?[8*a,3*a,0]:[0,a,5*a];
+    return {tone,gain,offset,values:[gain[0],0,0,0,offset[0]/255,0,gain[1],0,0,offset[1]/255,0,0,gain[2],0,offset[2]/255,0,0,0,1,0]};
+  }
+  function whiteBalance(hex,value=0){
+    if(!value)return hex;const {gain,offset}=temperatureMatrix(value);
+    return '#'+[1,3,5].map((start,i)=>Math.round(clamp(parseInt(hex.slice(start,start+2),16)*gain[i]+offset[i],0,255)).toString(16).padStart(2,'0')).join('');
+  }
   const deutanColour = hex => visionColour(hex, 'deutan');
-  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, visionColour, deutanColour, COLOUR_MATRICES, visibleField, fieldBoundary, focusRays, anatomyLook, snowSeed, snowPixels, floaterPosition };
+  const api = { clamp, wrap, toggleCondition, rotate, focusZoom, project, blurAt, visionColour, deutanColour, COLOUR_MATRICES, visibleField, fieldBoundary, focusRays, anatomyLook, snowSeed, snowPixels, floaterPosition, temperatureMatrix, whiteBalance };
   root.FieldMath = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(globalThis);
