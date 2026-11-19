@@ -11,31 +11,41 @@
  function setTheme(value=0){$('#journey-tone-matrix').setAttribute('values',FieldMath.temperatureMatrix(value).values.join(' '));document.documentElement.style.setProperty('--journey-tone',value);}
  class JourneyInformation extends root.PerspectiveInformation{
   show(entries,details={},settings={}){
+   this.sceneStudies?.forEach(scene=>scene.destroy());this.topicMotions?.forEach(motion=>motion.destroy());this.sceneStudies=[];this.topicMotions=[];setPeek(false);
    super.show(entries,details);this.track.classList.add('journey-information');this.settings=settings;setTheme(settings.tone||0);
    const overview=document.createElement('section');overview.className='perspective-overview';overview.setAttribute('aria-labelledby','perspective-question');
    const question=document.createElement('h1');question.id='perspective-question';question.textContent='How do you understand the world around you?';overview.append(question);
    const cards=this.track.querySelector('.perspective-cards');overview.append(cards);
-   cards.querySelectorAll('.perspective-card').forEach(card=>{const kind=card.dataset.perspectiveCard;card.setAttribute('aria-label','Your perspective — '+(kind==='field'?'Visual field':kind[0].toUpperCase()+kind.slice(1)));card.querySelector('.perspective-card-copy').textContent=JourneyContent.combined(entries,kind,{...settings,details});});
+   cards.querySelectorAll('.perspective-card').forEach(card=>{const kind=card.dataset.perspectiveCard;card.setAttribute('aria-label','Your perspective — '+(kind==='field'?'Visual field':kind[0].toUpperCase()+kind.slice(1)));card.querySelector('.perspective-card-copy').textContent=JourneyContent.combined(entries,kind,{...settings,details});card.dataset.motionDuration='300';card.dataset.motionEasing='ease-out';this.topicMotions.push(new TopicMotion(card));});
    this.track.prepend(overview);
    this.track.querySelectorAll('.perspective-section').forEach(section=>{
     const id=section.dataset.condition,entry=entries.find(c=>c.id===id),text=JourneyContent.study(id);
     section.querySelector('.perspective-introduction').remove();section.querySelector('.perspective-cards')?.remove();
     const row=document.createElement('div');row.className='condition-study';
     const copy=document.createElement('div');copy.className='condition-study-copy';
-    const introduction=document.createElement('p');introduction.className='condition-introduction';introduction.textContent=text.intro;
-    const impact=document.createElement('div');impact.className='condition-impact';const badge=document.createElement('span');badge.className='impact-label';badge.textContent='Impact';const paragraph=document.createElement('p');paragraph.textContent=text.impact;impact.append(badge,paragraph);copy.append(introduction,impact);
+    const introduction=document.createElement('p');introduction.className='condition-introduction';introduction.textContent=text.intro;introduction.tabIndex=0;introduction.setAttribute('aria-label',entry.name+' introduction');
+    const introPanel=document.createElement('div');introPanel.className='condition-introduction-panel';introPanel.append(introduction);
+    const impact=document.createElement('div');impact.className='condition-impact';const badge=document.createElement('span');badge.className='impact-label';badge.textContent='Impact';const paragraph=document.createElement('p');paragraph.textContent=text.impact;impact.append(badge,paragraph);copy.append(introPanel,impact);
+    paragraph.tabIndex=0;paragraph.setAttribute('aria-label',entry.name+' impact');
     const photo=document.createElement('div');photo.className='condition-study-photo';photo.dataset.condition=id;
     const img=document.createElement('img');const name=JourneyContent.photographs[id];img.src='assets/nov10/photos/'+name+'.webp';img.alt=entry.name+' — '+SeePhotographs[name].title;img.draggable=false;img.decoding='async';
     img.style.filter=(id==='colour'?`url(#preview-${details.colour||'deutan'}) `:'')+'url(#journey-tone)';photo.append(img);
     if(id==='hemianopia'){const mask=document.createElement('span');mask.className='condition-photo-mask';mask.dataset.side=details.hemianopia||'left';photo.append(mask);}
     if(id==='snow')addSnow(photo);
-    row.append(copy,photo);section.append(row);
+    row.append(copy,photo);section.append(row);this.sceneStudies.push(new SceneStudy(photo,{id,name,details}));
    });
    const report=this.track.querySelector('.report-control');report.disabled=false;report.innerHTML='Create Report <span aria-hidden="true">▸</span>';report.onclick=()=>document.dispatchEvent(new CustomEvent('journey-report'));
+   const back=document.createElement('button');back.type='button';back.className='information-back';back.innerHTML=$('#result-back').innerHTML;back.onclick=()=>$('#result-back').click();report.parentElement.prepend(back);
    this.view.setAttribute('aria-label','Your combined perspective and selected visual conditions');this.view.scrollTop=0;this.paint();
   }
+  setActive(active){super.setActive(active);this.sceneStudies?.forEach(scene=>scene.setActive(active));}
+  clear(){this.sceneStudies?.forEach(scene=>scene.destroy());this.topicMotions?.forEach(motion=>motion.destroy());this.sceneStudies=[];this.topicMotions=[];this.track.replaceChildren();this.view.dataset.conditionCount='0';setPeek(false);}
  }
  root.PerspectiveInformation=JourneyInformation;
+ const peek=document.createElement('button');peek.id='crop-peek';peek.type='button';peek.hidden=true;peek.setAttribute('aria-controls','information-scroll');$('#result').append(peek);
+ function setPeek(open){$('#result').classList.toggle('crop-is-open',open);peek.setAttribute('aria-expanded',String(open));peek.setAttribute('aria-label',open?'Close cropped view':'Show your cropped view');}
+ setPeek(false);peek.onclick=()=>setPeek(!$('#result').classList.contains('crop-is-open'));
+ peek.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();setPeek(false);}});
  function addSnow(parent){
   const noise=document.createElement('span');noise.className='photo-noise report-perception';noise.setAttribute('aria-hidden','true');
   const floaters=document.createElement('span');floaters.className='photo-floaters report-perception';floaters.setAttribute('aria-hidden','true');floaters.innerHTML='<i></i><i></i><i></i>';parent.append(noise,floaters);
@@ -92,5 +102,5 @@
  addEventListener('pointermove',e=>{if(e.pointerType==='touch'||!fine.matches||document.querySelector('dialog[open]')){document.documentElement.classList.remove('has-custom-cursor');cursor.classList.remove('visible');return;}document.documentElement.classList.add('has-custom-cursor');cursor.classList.add('visible');tx=e.clientX;ty=e.clientY;if(!started){cx=tx;cy=ty;started=true;}if(!cursorRAF)cursorRAF=requestAnimationFrame(cursorTick);},{passive:true});
  addEventListener('pointerdown',()=>cursor.classList.add('pressed'));addEventListener('pointerup',()=>cursor.classList.remove('pressed'));document.documentElement.addEventListener('pointerleave',()=>cursor.classList.remove('visible'));addEventListener('blur',()=>cursor.classList.remove('visible'));
  addEventListener('pagehide',()=>{cancelAnimationFrame(cursorRAF);cancelAnimationFrame(gazeRAF);cancelLoading();});
- root.JourneyUI={setTheme,prepareReport,playLoading,cancelLoading,resetReport(){ $('#report-image').removeAttribute('src');$('#report-summary').replaceChildren();$('.report-picture').querySelectorAll('.report-perception').forEach(n=>n.remove()); }};
+ root.JourneyUI={setTheme,prepareReport,playLoading,cancelLoading,setInformationActive(active){peek.hidden=!active;if(!active)setPeek(false);},resetReport(){ $('#report-image').removeAttribute('src');$('#report-summary').replaceChildren();$('.report-picture').querySelectorAll('.report-perception').forEach(n=>n.remove()); }};
 })(globalThis);

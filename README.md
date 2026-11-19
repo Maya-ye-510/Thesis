@@ -136,3 +136,15 @@ The app itself does not require Node.js. No dependencies need to be installed to
 - New files: `journey.css`, `journey-content.js`, `journey-ui.js`, `nov13-artwork.js`. Original node IDs and exports are documented in `assets/nov13/DESIGN.md`. No runtime dependencies or remote assets were added.
 
 Validation: JavaScript syntax checks and 44 automated tests; browser coverage includes combined and single-condition flows, cool/warm persistence, frozen world with independent Visual Snow, component hit bounds, analysis and report loading, exact report crop, eye tracking, Home reset, desktop geometry and mobile scrolling without horizontal overflow.
+
+## November 17 information and scene refinement
+
+Information matches the revised square-corner copy/photo layout, a 32px gap, and bottom Back/Create Report navigation. Body copy is self-hosted Manrope Regular16px with Auto line height; Impact and component labels retain Medium. Condition headings are Regular24px. Longer introduction and impact text scrolls within the fixed panels and supports keyboard focus. The font’s weight axis200–800 is bundled locally and preloaded, so visitors do not need it installed.
+
+Color and Field use fresh original SVG variants with300ms Ease-out Smart Animate, including the pink/cyan field stripes. Their decorative palette is independent of the photograph’s warm/cool tone. The three notes use different openings and discuss attention, recognition and context across the selected conditions.
+
+Every selected condition has a distinct credited real photograph with its corresponding optical effect. Dragging or arrow keys adds bounded perspective and foreground/background parallax; Home restores the scene. These are2.5D photographic studies, not generated or fully reconstructed environments. Vertical touch scrolling remains available. Scene rendering stops off-page; reduced motion keeps the images still. The selector orb and Analyze/counter circles have gentle independent drift and breathing.
+
+New files: `nov17.css`, `nov17-artwork.js`, `scene-study.js`; design details and asset provenance: `assets/nov17/DESIGN.md`. Unchanged first two pages retain their design.
+
+The follow-up recording adds a reversible crop reveal inside Information: click the left blue strip to expose the cropped view and shift the information layout, then click it again or press Escape on that button to close it. This follows the source500ms Ease-out transition and preserves the current scroll/capture. The three overview components now use single-SVG geometry and colour interpolation over300ms Ease-out rather than crossfading paired images. Structure has no gray outline. Introduction and Impact scrollbars share the same inset; introduction and main information scrollbars are yellow#FFE96D.

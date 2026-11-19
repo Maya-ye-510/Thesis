@@ -35,7 +35,7 @@ function sizeArtwork(){
 new ResizeObserver(sizeArtwork).observe($('.intro-graphic'));new ResizeObserver(sizeArtwork).observe($('#condition-options'));addEventListener('resize',sizeArtwork);
 
 function updateScreen(name,replace){
- screen=name;if(name!=='report')cancelReport();if(name!=='conditions')closeDetails();if(name!=='result')cancelAnalysis(false);$$('.screen').forEach(el=>{el.hidden=el.id!==(name==='detail'?'result':name);el.classList.remove('entering');});
+ screen=name;JourneyUI.setInformationActive(name==='detail');if(name!=='report')cancelReport();if(name!=='conditions')closeDetails();if(name!=='result')cancelAnalysis(false);$$('.screen').forEach(el=>{el.hidden=el.id!==(name==='detail'?'result':name);el.classList.remove('entering');});
  document.title='I SEE — '+({home:'Prototype 2',intro:'About',conditions:'Personal condition',experience:'Experience',result:'Analyze your perspective',detail:'Ways of seeing',report:'Your experience report'})[name];
  if(replace)history.replaceState({screen:name},'','#'+name);else if(location.hash!=='#'+name)history.pushState({screen:name},'','#'+name);
  field.setActive(name==='experience');const showResult=name==='result'||name==='detail';if(resultField.active!==showResult)resultField.setActive(showResult);
@@ -86,6 +86,7 @@ function layers(config,condition=false){return ['default','hover','selected'].ma
 }).join('');}
 function animateArtwork(button, click = false) {
   const state = button.classList.contains('is-selected') ? 'selected' : (button.classList.contains('is-hover')||button.closest('.is-open')) ? 'hover' : 'default';
+  if(button.topicMotion){button.topicMotion.to(state==='hover');return;}
   const sourceState = button.dataset.artState || 'default';
   if (sourceState === state) return;
   const source = button.querySelector('.art-state.' + sourceState);
@@ -98,7 +99,8 @@ function animateArtwork(button, click = false) {
   button.dataset.artState = state;
   button.querySelectorAll('.art-state').forEach(layer => { layer.style.opacity = layer === target ? '1' : '0'; });
   if (reduceMotion.matches) return;
-  const timing = { duration: button.matches('[data-perspective-card]') ? 500 : click ? 300 : button.matches('[data-condition]') ? 700 : 450, easing: click ? 'ease-in' : 'ease-in-out' };
+  const topic = button.matches('[data-perspective-card]');
+  const timing = { duration: topic ? Number(button.dataset.motionDuration || 500) : click ? 300 : button.matches('[data-condition]') ? 700 : 450, easing: topic ? (button.dataset.motionEasing || 'ease-in-out') : click ? 'ease-in' : 'ease-in-out' };
   const animate=(el,frames)=>{const animation=el.animate(frames,timing);owned.push(animation);};
   const inverse = (from, to, svg) => {
     const units = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
@@ -168,7 +170,7 @@ function updateControls(){display.forEach(c=>{const b=$(`[data-display="${c.id}"
 function setHover(button,value){button.classList.toggle('is-hover',value);animateArtwork(button);}
 display.forEach(c=>{const group=document.createElement('div');group.className='display-choice';const b=document.createElement('button');b.className='variant-button display-button';b.dataset.display=c.id;b.setAttribute('aria-label',c.name);b.innerHTML=layers(c);hoverStates(b);b.onclick=()=>{controls[c.id]=!controls[c.id];updateControls();};if(c.id==='motion')b.title='Pause or resume particle motion';const label=document.createElement('button');label.className='display-label';label.textContent=c.name;label.setAttribute('aria-label','Select '+c.name);label.onclick=()=>b.click();['pointerenter','focus'].forEach(type=>label.addEventListener(type,()=>setHover(b,true)));['pointerleave','blur'].forEach(type=>label.addEventListener(type,()=>setHover(b,false)));group.append(b,label);$('#display-options').append(group);});
 const eyeButton=$('.eye-control');eyeButton.innerHTML=layers({id:'eye-control',default:eyeButton.dataset.default,hover:eyeButton.dataset.hover,selected:eyeButton.dataset.selected});hoverStates(eyeButton);
-function resetExperience(){cancelReport();JourneyUI.resetReport();information.track.replaceChildren();information.view.dataset.conditionCount='0';$('#color-tone').value='0';$('#color-tone').setAttribute('aria-valuetext','Neutral');JourneyUI.setTheme(0);animateFocusLines(false,true);closeDetails();revision++;selection.reset();Object.assign(controls,{structure:false,colors:false,motion:false});capture=null;comparing=null;capturing=false;cancelCrop();field.reset();resultField.reset();$$('.is-hover').forEach(b=>b.classList.remove('is-hover'));updateConditions();updateControls();$('#result-symptoms').replaceChildren();$('#result-bridge').removeAttribute('src');}
+function resetExperience(){cancelReport();JourneyUI.resetReport();information.clear();$('#color-tone').value='0';$('#color-tone').setAttribute('aria-valuetext','Neutral');JourneyUI.setTheme(0);animateFocusLines(false,true);closeDetails();revision++;selection.reset();Object.assign(controls,{structure:false,colors:false,motion:false});capture=null;comparing=null;capturing=false;cancelCrop();field.reset();resultField.reset();$$('.is-hover').forEach(b=>b.classList.remove('is-hover'));updateConditions();updateControls();$('#result-symptoms').replaceChildren();$('#result-bridge').removeAttribute('src');}
 
 function fieldBounds(){const r=$('.blue-panel').getBoundingClientRect();return{width:r.width,height:r.height};}
 function paintCrop(){if(!cropRect)return;Object.assign($('#crop-frame').style,{left:cropRect.x+'px',top:cropRect.y+'px',width:cropRect.width+'px',height:cropRect.height+'px'});$('#crop-frame').setAttribute('aria-label',`Crop selection, ${Math.round(cropRect.width)} by ${Math.round(cropRect.height)}. Drag to move. Shift and arrow keys resize.`);}

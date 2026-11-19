@@ -1,0 +1,74 @@
+/* November 17: frame 440:891, updated Color / Field variants, and photographic depth. */
+.condition-orb{animation:condition-breathe 9s ease-in-out infinite}
+@keyframes condition-breathe{0%,100%{transform:translate(0,0) scale(1)}35%{transform:translate(8px,-10px) scale(1.045)}72%{transform:translate(-7px,5px) scale(.97)}}
+.analysis-halo{animation:halo-breathe 12s ease-in-out infinite;mix-blend-mode:multiply}
+.analysis-halo.cyan{left:calc(492px * var(--flow-scale,1));top:calc(462px * var(--flow-scale,1));animation-duration:11s;animation-delay:-3s}
+.analysis-halo.blue{left:calc(698px * var(--flow-scale,1));top:calc(306px * var(--flow-scale,1));animation-duration:9s;animation-delay:-5s}
+.analysis-halo.yellow{left:calc(518px * var(--flow-scale,1));top:calc(-33px * var(--flow-scale,1));animation-duration:14s;animation-delay:-8s}
+.analysis-halo svg{transform:scale(calc(var(--flow-scale,1) * 1.15))}
+@keyframes halo-breathe{0%,100%{transform:translate(0,0) scale(1)}32%{transform:translate(19px,-16px) scale(1.045)}68%{transform:translate(-17px,13px) scale(.97)}}
+#start-analysis{margin-left:calc(96px * var(--flow-scale,1))}
+.journey-information{font-synthesis:none}
+.perspective-overview h1,.journey-information .perspective-section h2{font-weight:400}
+.perspective-card .perspective-vector{filter:none}
+.perspective-card-copy{font:400 16px/normal Manrope;scrollbar-color:#aaa transparent}
+.perspective-card.color .perspective-card-copy{left:calc(21px * var(--card-scale,1));right:calc(19px * var(--card-scale,1));top:calc(52px * var(--card-scale,1));max-height:calc(143px * var(--card-scale,1));transition-duration:300ms;transition-timing-function:ease-out}
+.perspective-card.field .perspective-card-copy{left:calc(23px * var(--card-scale,1));right:calc(17px * var(--card-scale,1));top:calc(48px * var(--card-scale,1));max-height:calc(143px * var(--card-scale,1));transition-duration:300ms;transition-timing-function:ease-out}
+.journey-information .perspective-section{padding-bottom:calc(71px * var(--flow-scale,1))}
+.journey-information .perspective-section:last-of-type{padding-bottom:calc(73px * var(--flow-scale,1))}
+.condition-study{grid-template-columns:523fr 487fr;gap:calc(32px * var(--flow-scale,1));margin-top:calc(46px * var(--flow-scale,1));margin-left:24px;margin-right:12px;height:calc(423px * var(--flow-scale,1))}
+.condition-study-copy{border:0;border-radius:0;background:#d9d9d9;height:100%;overflow:hidden;display:grid;grid-template-rows:167fr 256fr}
+.condition-study-copy p{font:400 16px/normal Manrope}
+.condition-introduction{padding:calc(32px * var(--flow-scale,1));overflow-y:auto;scrollbar-width:thin;scrollbar-color:#aaa transparent;min-height:0}
+.condition-impact{border-radius:0;padding:calc(26px * var(--flow-scale,1)) calc(32px * var(--flow-scale,1)) calc(46px * var(--flow-scale,1));min-height:0;display:flex;flex-direction:column}
+.impact-label{font:500 16px/normal Manrope;align-self:flex-start;padding:0 calc(12px * var(--flow-scale,1));margin-bottom:calc(27px * var(--flow-scale,1));border-radius:12px;flex:none}
+.condition-impact p{overflow-y:auto;min-height:0;scrollbar-width:thin;scrollbar-color:#aaa transparent}
+.condition-study-photo{min-height:0;border-radius:0;touch-action:pan-y;position:relative;isolation:isolate}
+.scene-study{overflow:hidden;outline-offset:4px}
+.scene-camera{position:absolute;inset:-5%;transform:perspective(1100px) scale(1.025);transform-style:preserve-3d;pointer-events:none}
+.scene-plane{position:absolute;inset:0;mask-size:cover;mask-position:center;mask-repeat:no-repeat;backface-visibility:hidden}
+.scene-plane img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;user-select:none}
+.scene-middle{mask-image:linear-gradient(transparent 30%,#000b 62%,#000);opacity:.7}
+.scene-near{z-index:2}
+.condition-study-photo[data-condition=myopia] .scene-plane{mask-position:right center}
+.condition-study-photo[data-condition=myopia] .scene-plane img{object-position:right center}
+.scene-study .condition-photo-mask{pointer-events:none}
+.journey-information .perspective-end{justify-content:space-between;align-items:center;padding:0 0 12px;margin-right:calc(-30px * var(--flow-scale,1))}
+.report-control{font:600 18px/normal Manrope;display:inline-flex;align-items:center;gap:7px}
+.report-control span{margin-left:0;width:17px}
+.information-back{font:500 18px/normal Manrope;display:inline-flex;align-items:center;gap:8px;margin-left:-7px}
+.information-back .nav-arrow{width:17px;height:auto;transform:rotate(90deg) scaleY(-1)}
+#result.is-explaining .result-navigation{display:none}
+@media(max-width:1000px) and (min-width:701px){.condition-introduction{padding:20px}.condition-impact{padding:20px}.impact-label{margin-bottom:16px}}
+@media(max-width:700px){
+ .analysis-halo.cyan{left:22%;top:52%}.analysis-halo.blue{left:46%;top:34%}.analysis-halo.yellow{left:32%;top:7%}#start-analysis{margin-left:0}
+ .condition-study{grid-template-columns:1fr;gap:20px;margin:24px 0 0;height:auto}.condition-study-copy{height:423px;grid-template-rows:167px 256px}.condition-introduction{padding:26px 22px}.condition-impact{padding:24px 22px 30px}.impact-label{margin-bottom:22px;padding:0 12px}.condition-study-photo{height:330px}.journey-information .perspective-section{padding-bottom:36px}.journey-information .perspective-section:last-of-type{padding-bottom:45px}.report-control,.information-back{font-size:16px}.journey-information .perspective-end{margin-right:0}.information-back{margin-left:0}
+}
+@media(prefers-reduced-motion:reduce){.condition-orb,.analysis-halo{animation:none}.scene-camera{transform:none!important}.scene-plane{transform:none!important}}
+
+/* Video follow-up: one continuous geometric morph and a reversible crop reveal. */
+#result.is-explaining .result-window{transition:left 500ms ease-out,width 500ms ease-out}
+.topic-live{position:absolute;inset:0;pointer-events:none;z-index:0}
+.perspective-card-copy{z-index:2;transition-duration:300ms;transition-timing-function:ease-out}
+#crop-peek{position:absolute;left:-22.5194%;top:15.1442%;width:calc(76.5625dvh * 466 / 637);aspect-ratio:466/637;z-index:6;background:transparent;border:0;border-radius:calc(35px * var(--flow-scale,1));transition:left 500ms ease-out,width 500ms ease-out;outline-offset:5px}
+#crop-peek[hidden]{display:none}
+#result.is-explaining #information-scroll,#result.is-explaining .perspective-spine{transition:transform 500ms ease-out}
+#result.is-explaining.crop-is-open .result-window,#result.is-explaining.crop-is-open #crop-peek{left:3.2372%}
+#result.is-explaining.crop-is-open #information-scroll,#result.is-explaining.crop-is-open .perspective-spine{transform:translateX(calc(366px * var(--flow-scale,1)))}
+#result.is-explaining #information-scroll{scrollbar-color:#ffe96d transparent}
+.condition-introduction-panel{padding:calc(32px * var(--flow-scale,1));min-height:0;overflow:hidden}
+.condition-introduction{padding:0;height:100%;min-height:0}
+.condition-introduction,.condition-impact p{scrollbar-gutter:stable;scrollbar-width:thin}
+.condition-introduction{scrollbar-color:#ffe96d transparent}
+.condition-impact p{scrollbar-color:#aaa transparent}
+.condition-introduction::-webkit-scrollbar,.condition-impact p::-webkit-scrollbar{width:5px}
+.condition-introduction::-webkit-scrollbar-thumb{background:#ffe96d;border-radius:20px}
+.condition-impact p::-webkit-scrollbar-thumb{background:#aaa;border-radius:20px}
+@media(max-width:1000px) and (min-width:701px){.condition-introduction-panel{padding:20px}.condition-introduction{padding:0}}
+@media(max-width:700px){
+ .condition-introduction-panel{padding:26px 22px}.condition-introduction{padding:0}
+ #crop-peek{left:-44%;top:14%;width:50%;height:66%;aspect-ratio:auto}
+ #result.is-explaining.crop-is-open .result-window,#result.is-explaining.crop-is-open #crop-peek{left:5%;width:72vw;height:calc(72vw * 637 / 466)}
+ #result.is-explaining.crop-is-open #information-scroll,#result.is-explaining.crop-is-open .perspective-spine{transform:translateX(75vw)}
+}
+@media(prefers-reduced-motion:reduce){#crop-peek,#result.is-explaining #information-scroll,#result.is-explaining .perspective-spine{transition:none}}
