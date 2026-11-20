@@ -148,3 +148,11 @@ Every selected condition has a distinct credited real photograph with its corres
 New files: `nov17.css`, `nov17-artwork.js`, `scene-study.js`; design details and asset provenance: `assets/nov17/DESIGN.md`. Unchanged first two pages retain their design.
 
 The follow-up recording adds a reversible crop reveal inside Information: click the left blue strip to expose the cropped view and shift the information layout, then click it again or press Escape on that button to close it. This follows the source500ms Ease-out transition and preserves the current scroll/capture. The three overview components now use single-SVG geometry and colour interpolation over300ms Ease-out rather than crossfading paired images. Structure has no gray outline. Introduction and Impact scrollbars share the same inset; introduction and main information scrollbars are yellow#FFE96D.
+
+## November 19 Information / Report update
+
+Information follows the taller Figma layout, with narrow inset text scrollbars and clickable day/night comparisons that retain draggable depth. The previous blue-crop caption and perspective click action are removed. Report now follows the Data Analysis layout and restores the captured world as gently drifting, breathing particles at the captured focus; Visual Snow remains active independently. Save My Result exports the current result as PNG. Design references, source-photo details and QA are in `assets/nov19/DESIGN.md`.
+
+## November 20 Report interaction
+
+The Report now follows the latest Figma component states: Condition(s), Color Tone and Focus expand downward with300ms Ease Out transitions and collapse on a second click. The gray region is an interactive Perception Map: switch between Visual Input and Possible Cues, drag the inspection lens, or explore points with pointer/keyboard. Its explanation responds to captured conditions, tone and distance without assigning a personal ability score. See `assets/nov20/DESIGN.md` for source geometry, motion evidence and QA.

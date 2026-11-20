@@ -268,7 +268,7 @@
         } ctx.restore();
       }
       for (const pos of points) {
-        const p = pos.p, box = p.radius * pos.size * 5;
+        const p = pos.p, breath = this.ambient ? 1 + Math.sin(this.time * .65 + p.phase) * .055 : 1, box = p.radius * pos.size * 5 * breath;
         const color = this.colourFor(p);
         const opticalScale = this.lens ? w * this.lens.sizeRatio : 1;
         const blur = blurAt(pos.distance, myopia) * opticalScale;
@@ -277,7 +277,7 @@
         const sprite = this.sprite(type, color, blur * 160 / Math.max(12, box));
         const nearFade = clamp((pos.viewZ - .8) / .8, 0, 1), fog = clamp((17.5 - pos.distance) / 4.5, 0, 1);
         ctx.globalAlpha = (.95 - pos.depth * .38) * nearFade * fog;
-        ctx.save(); ctx.translate(pos.x, pos.y); ctx.rotate(p.rotation + this.camera.yaw + this.time * p.speed * .06);
+        ctx.save();if(this.ambient)ctx.globalCompositeOperation='screen'; ctx.translate(pos.x, pos.y); ctx.rotate(p.rotation + this.camera.yaw + this.time * p.speed * .06);
         ctx.drawImage(sprite, -box / 2, -box / 2, box, box); ctx.restore();
         if(this.conditions.has('astigmatism')&&p.radius>9){
           const alpha=ctx.globalAlpha;ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=alpha*.85;

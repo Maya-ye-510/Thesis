@@ -41,3 +41,9 @@ test('Topic motion eases out continuously and interpolates colours between the F
  assert.equal(TopicMotion.color('#8DCCFF','#FF8787',1),'rgb(255,135,135)');
  assert.equal(TopicMotion.color('white','black',.5),'rgb(128,128,128)');
 });
+
+test('Night comparisons use six distinct existing credited photographs',()=>{
+ require('../photography.js');
+ const names=Object.values(SceneStudy.nightNames);assert.equal(new Set(names).size,6);
+ for(const name of names)assert.ok(globalThis.SeePhotographs[name]?.license);
+});

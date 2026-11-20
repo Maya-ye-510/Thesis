@@ -35,14 +35,14 @@ function sizeArtwork(){
 new ResizeObserver(sizeArtwork).observe($('.intro-graphic'));new ResizeObserver(sizeArtwork).observe($('#condition-options'));addEventListener('resize',sizeArtwork);
 
 function updateScreen(name,replace){
- screen=name;JourneyUI.setInformationActive(name==='detail');if(name!=='report')cancelReport();if(name!=='conditions')closeDetails();if(name!=='result')cancelAnalysis(false);$$('.screen').forEach(el=>{el.hidden=el.id!==(name==='detail'?'result':name);el.classList.remove('entering');});
+ screen=name;JourneyUI.setReportActive(name==='report');if(name!=='report')cancelReport();if(name!=='conditions')closeDetails();if(name!=='result')cancelAnalysis(false);$$('.screen').forEach(el=>{el.hidden=el.id!==(name==='detail'?'result':name);el.classList.remove('entering');});
  document.title='I SEE — '+({home:'Prototype 2',intro:'About',conditions:'Personal condition',experience:'Experience',result:'Analyze your perspective',detail:'Ways of seeing',report:'Your experience report'})[name];
  if(replace)history.replaceState({screen:name},'','#'+name);else if(location.hash!=='#'+name)history.pushState({screen:name},'','#'+name);
  field.setActive(name==='experience');const showResult=name==='result'||name==='detail';if(resultField.active!==showResult)resultField.setActive(showResult);
  $('.analysis-prompt').inert=name==='detail';$('.analysis-prompt').setAttribute('aria-hidden',name==='detail');$('#result').classList.toggle('is-explaining',name==='detail');$('.condition-explanation').hidden=name!=='detail';information.setActive(name==='detail');$('#optical-caption').hidden=name!=='detail';$('#result-next').hidden=name==='detail';
  $('#result').setAttribute('aria-label',name==='detail'?'Condition explanation':'The world in your eyes');
  $$('.result-symptom').forEach(b=>{const hidden=name==='detail'&&b.dataset.symptom!==comparing;b.inert=hidden;b.setAttribute('aria-hidden',hidden);});
- $('.result-window>p').setAttribute('aria-hidden',name==='detail');
+
  if(name==='result'&&capture){comparing=null;renderSymptoms();cancelAnalysis(true);}
  if(name==='report')JourneyUI.prepareReport(capture);
  if(name==='home')resetExperience();
@@ -231,7 +231,7 @@ $('#start-analysis').onclick=startAnalysis;
 $('#result').addEventListener('wheel',e=>{if(screen!=='detail'||e.ctrlKey||e.target.closest('#information-scroll'))return;e.preventDefault();information.scrollBy(e.deltaY*(e.deltaMode===1?18:e.deltaMode===2?innerHeight:1));},{passive:false});
 $('#result-back').onclick=()=>go(screen==='detail'?'result':'experience');
 $('#result-next').onclick=startAnalysis;
-$('#result-canvas').addEventListener('click',()=>{if(!capture||resultField.lastGestureMoved||screen!=='result')return;resultField.target.yaw+=Math.PI/6;resultField.updateRotation();resultField.request();});
+
 updateConditions();updateControls();
 // Eye movement is computed from the actual responsive element bounds.
 const eyes = $$('[data-eye]').map(el => ({ el, pupil: el.querySelector('.pupil'), x: 0, y: 0, tx: 0, ty: 0 })); let eyeRAF = 0;

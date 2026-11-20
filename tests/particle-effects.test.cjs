@@ -110,3 +110,10 @@ test('The cropped result preserves the displayed overlay clock while freezing on
  field.restoreState({camera:{yaw:0,pitch:0,zoom:0},time:8,snowTime:8,snowView:{time:8.14,camera:{yaw:0,pitch:0,zoom:0},gaze:{x:0,y:0}},focus:.5,conditions:['snow'],details:{},controls:{},paused:true});
  assert.equal(field.time,8);assert.equal(field.snowTime,8.14);assert.equal(field.paused,true);assert.equal(field.frozenSnow,null);
 });
+
+// Report playback must resume the captured world without changing the selected lens.
+test('Report playback advances world and perception at a fixed captured focus and camera',()=>{
+ const field=fieldPrototype(),camera={yaw:.6,pitch:-.1,zoom:-2};
+ Object.assign(field,{active:true,width:450,ambient:true,lockZoom:true,paused:false,freezePerception:false,reduced:{matches:false},camera:{...camera},target:{...camera},focus:.72,time:8,snowTime:9,last:1000,conditions:new Set(['myopia','snow']),snowGaze:{x:0,y:0,yaw:camera.yaw,pitch:camera.pitch},canvas:{dataset:{}},draw(){},request(){}});
+ field.frame(1050);assert.ok(field.time>8);assert.ok(field.snowTime>9);assert.equal(field.focus,.72);assert.deepEqual(field.camera,camera);
+});
