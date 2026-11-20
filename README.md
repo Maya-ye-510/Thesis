@@ -155,4 +155,8 @@ Information follows the taller Figma layout, with narrow inset text scrollbars a
 
 ## November 20 Report interaction
 
-The Report now follows the latest Figma component states: Condition(s), Color Tone and Focus expand downward with300ms Ease Out transitions and collapse on a second click. The gray region is an interactive Perception Map: switch between Visual Input and Possible Cues, drag the inspection lens, or explore points with pointer/keyboard. Its explanation responds to captured conditions, tone and distance without assigning a personal ability score. See `assets/nov20/DESIGN.md` for source geometry, motion evidence and QA.
+The Report now follows the latest Figma component states: Condition(s), Structure and Focus expand downward with300ms Ease Out transitions and collapse on a second click. The gray region is an interactive Perception Map: switch between Visual Input and Possible Cues, drag the whole graphic, rearrange its information, or explore points with pointer/keyboard. Its explanation responds to captured conditions, tone and distance without assigning a personal ability score. See `assets/nov20/DESIGN.md` for source geometry, motion evidence and QA.
+
+## Current final Result page
+
+The final page now follows Figma frame581:802: wider Condition(s) / Structure / Focus disclosures, a100–180 word personal summary with a constant closing paragraph, and a gray perspective ticket with the live crop and captured metadata. This supersedes the Perception Map described in the earlier implementation notes. Saving exports the complete ticket. Layout references and QA are recorded in `assets/nov20-result/DESIGN.md`.

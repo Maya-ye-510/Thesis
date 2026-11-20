@@ -22,7 +22,7 @@
     const plane=document.createElement('div');plane.className='scene-plane scene-'+part;const image=index===0?photo:photo.cloneNode();image.alt=index===0?photo.alt:'';image.draggable=false;
     if(index===2&&id==='myopia')image.src='assets/nov10/photos/'+name+'-source.webp';plane.append(image);this.camera.append(plane);this.planes.push(plane);
    }host.prepend(this.camera);host.classList.add('scene-study');host.tabIndex=0;host.setAttribute('role','group');host.setAttribute('aria-roledescription','draggable photographic scene');host.setAttribute('aria-label',photo.alt+'. Drag horizontally or use arrow keys to look around. Home resets the view.');
-   this.setScene('day');
+   this.setScene('day');if(id==='snow')this.snow=new SnowOverlay(host);
    host.addEventListener('pointerdown',e=>{if(e.button!==0)return;this.drag={id:e.pointerId,x:e.clientX,y:e.clientY,start:{...this.target},touch:e.pointerType==='touch'};host.setPointerCapture(e.pointerId);host.classList.add('is-dragging');},{signal});
    host.addEventListener('pointermove',e=>{if(!this.drag||e.pointerId!==this.drag.id)return;const r=host.getBoundingClientRect(),dx=(e.clientX-this.drag.x)/r.width,dy=(e.clientY-this.drag.y)/r.height;this.target.x=clamp(this.drag.start.x+dx*2,-1,1);if(!this.drag.touch)this.target.y=clamp(this.drag.start.y+dy*2,-1,1);this.request();},{signal});
    const release=e=>{if(e.type==='pointerup'&&this.drag&&Math.hypot(e.clientX-this.drag.x,e.clientY-this.drag.y)<6)this.switchScene();this.drag=null;host.classList.remove('is-dragging');};host.addEventListener('pointerup',release,{signal});host.addEventListener('pointercancel',release,{signal});host.addEventListener('lostpointercapture',release,{signal});
@@ -42,16 +42,17 @@
    const button=this.host.parentElement.querySelector('.scene-switch');if(button){button.setAttribute('aria-label','Switch '+this.id+' to the '+(night?'day':'night')+' scene');button.setAttribute('aria-pressed',String(night));}
    this.request();
   }
-  setActive(active){this.active=active;if(active)this.request();else{cancelAnimationFrame(this.raf);this.raf=0;this.drag=null;this.host.classList.remove('is-dragging');}}
+  setActive(active){this.snow?.setActive(active);this.active=active;if(active)this.request();else{cancelAnimationFrame(this.raf);this.raf=0;this.drag=null;this.host.classList.remove('is-dragging');}}
   request(){if(this.active&&this.visible&&!document.hidden&&!this.raf)this.raf=requestAnimationFrame(()=>this.paint());}
   paint(){this.raf=0;const ease=this.reduce.matches?1:.16;for(const axis of['x','y'])this.current[axis]+=(this.target[axis]-this.current[axis])*ease;const p=pose(this.current.x,this.current.y);
    // The container remains fixed; three cropped planes move by different amounts.
    this.camera.style.transform=`perspective(1100px) rotateX(${p.pitch}deg) rotateY(${p.yaw}deg) scale(1.025)`;
-   this.planes.forEach((plane,i)=>{plane.style.transform=`translate(${p.x*(i+1)*-3}px,${p.y*(i+1)*-2}px)`;});
+   // One shared pose avoids shifted duplicate photographs and false light streaks.
+   this.planes.forEach(plane=>{plane.style.transform=`translate(${p.x*-4}px,${p.y*-3}px)`;});
    this.host.dataset.scenePose=p.yaw.toFixed(2)+','+p.pitch.toFixed(2);
    if(Math.abs(this.target.x-p.x)+Math.abs(this.target.y-p.y)>.002)this.request();
   }
-  destroy(){cancelAnimationFrame(this.raf);this.abort.abort();this.visibility.disconnect();}
+  destroy(){this.snow?.destroy();cancelAnimationFrame(this.raf);this.abort.abort();this.visibility.disconnect();}
  }
  SceneStudy.pose=pose;SceneStudy.nightNames=Object.freeze(nightNames);root.SceneStudy=SceneStudy;if(typeof module!=='undefined'&&module.exports)module.exports=SceneStudy;
 })(globalThis);

@@ -32,6 +32,9 @@
    });
    this.veils=[...this.svg.children].filter(n=>n.tagName==='rect'&&Number(n.getAttribute('fill-opacity'))===.55);
    if(card.dataset.perspectiveCard==='structure')this.svg.querySelectorAll('rect[stroke]').forEach(n=>n.removeAttribute('stroke'));
+   const kind=card.dataset.perspectiveCard;
+   this.svg.querySelectorAll('path[fill="black"]:not([stroke]):not([data-motion-key])').forEach(path=>path.remove());
+   const title=document.createElement('span');title.className='topic-title';title.textContent=kind==='field'?'Visual field':kind[0].toUpperCase()+kind.slice(1);card.append(title);
    this.render(0);card.topicMotion=this;
   }
   render(progress){this.progress=progress;this.card.dataset.motionProgress=progress.toFixed(3);
@@ -40,7 +43,7 @@
     else if(track.template){let i=0;node.setAttribute('d',track.template.replace(numbers,()=>String(mix(track.a[i],track.b[i++],progress))));}
     else node.setAttribute(track.attr,track.color?color(track.a,track.b,progress):mix(Number(track.a),Number(track.b),progress));
    }
-   this.veils.forEach(n=>n.setAttribute('fill-opacity',.55*progress));
+   this.veils.forEach(n=>n.setAttribute('fill-opacity',(this.card.dataset.perspectiveCard==='field'?.70:.55)*progress));
   }
   to(open){const target=open?1:0;cancelAnimationFrame(this.raf);this.raf=0;this.card.dataset.artState=open?'hover':'default';if(this.reduce.matches){this.render(target);return;}const from=this.progress,start=performance.now();
    const tick=now=>{const t=Math.min(1,(now-start)/300);this.render(mix(from,target,easeOut(t)));if(t<1)this.raf=requestAnimationFrame(tick);else this.raf=0;};this.raf=requestAnimationFrame(tick);

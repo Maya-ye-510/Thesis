@@ -31,21 +31,16 @@
     const img=document.createElement('img');const name=JourneyContent.photographs[id];img.src='assets/nov10/photos/'+name+'.webp';img.alt=entry.name+' — '+SeePhotographs[name].title;img.draggable=false;img.decoding='async';
     img.style.filter=(id==='colour'?`url(#preview-${details.colour||'deutan'}) `:'')+'url(#journey-tone)';photo.append(img);
     if(id==='hemianopia'){const mask=document.createElement('span');mask.className='condition-photo-mask';mask.dataset.side=details.hemianopia||'left';photo.append(mask);}
-    if(id==='snow')addSnow(photo);
     const hint=document.createElement('span');hint.className='scene-drag-hint';hint.textContent='Drag to explore this view';photo.append(hint);const switcher=document.createElement('button');switcher.type='button';switcher.className='scene-switch';switcher.textContent='Click to switch scenes';media.append(photo,switcher);row.append(copy,media);section.append(row);const scene=new SceneStudy(photo,{id,name,details});switcher.onclick=()=>scene.switchScene();this.sceneStudies.push(scene);
    });
    const report=this.track.querySelector('.report-control');report.disabled=false;report.innerHTML='Create Report <span aria-hidden="true">▸</span>';report.onclick=()=>document.dispatchEvent(new CustomEvent('journey-report'));
    const back=document.createElement('button');back.type='button';back.className='information-back';back.innerHTML=$('#result-back').innerHTML;back.onclick=()=>$('#result-back').click();report.parentElement.prepend(back);
    this.view.setAttribute('aria-label','Your combined perspective and selected visual conditions');this.view.scrollTop=0;this.paint();
   }
-  setActive(active){super.setActive(active);this.sceneStudies?.forEach(scene=>scene.setActive(active));}
+  setActive(active){super.setActive(active);this.sceneStudies?.forEach(scene=>scene.setActive(active));cancelAnimationFrame(this.scrollResetRAF);if(active){this.view.scrollTo({top:0,behavior:'instant'});this.scrollResetRAF=requestAnimationFrame(()=>{if(this.active)this.view.scrollTo({top:0,behavior:'instant'});});}}
   clear(){this.sceneStudies?.forEach(scene=>scene.destroy());this.topicMotions?.forEach(motion=>motion.destroy());this.sceneStudies=[];this.topicMotions=[];this.track.replaceChildren();this.view.dataset.conditionCount='0';}
  }
  root.PerspectiveInformation=JourneyInformation;
- function addSnow(parent){
-  const noise=document.createElement('span');noise.className='photo-noise report-perception';noise.setAttribute('aria-hidden','true');
-  const floaters=document.createElement('span');floaters.className='photo-floaters report-perception';floaters.setAttribute('aria-hidden','true');floaters.innerHTML='<i></i><i></i><i></i>';parent.append(noise,floaters);
- }
  // Reuse the same three-part Start button so its hover behaviour matches page 2.
  const analyze=$('#start-analysis');analyze.classList.add('start');analyze.innerHTML='<span class="start-line left"></span><span class="start-text">Analyze</span><span class="start-line right"></span>';
  $('.analysis-prompt>p').textContent='How does my vision affect how I understand this experience and the world around me?';
@@ -54,16 +49,17 @@
  const tone=document.createElement('label');tone.className='tone-control';tone.innerHTML='<span>Switch color tone</span><input id="color-tone" type="range" min="-1" max="1" step="0.02" value="0" aria-label="Color tone: cool to warm" aria-valuetext="Neutral"><span class="tone-ticks" aria-hidden="true"></span>';$('.blue-panel').append(tone);
  $('.current-condition>p').textContent='Selected conditions';
  const report=document.createElement('section');report.id='report';report.className='screen new-screen';report.hidden=true;report.setAttribute('aria-label','Your experience report');
- report.innerHTML='<header class="site-header"><button class="logo logo-small" data-go="home" aria-label="I SEE home"><span>I </span><span class="see">SEE</span></button><button class="about" data-about>ABOUT</button></header><img class="report-cross" src="assets/nov19/report-cross.svg" alt=""><div class="report-data"><h1>Data Analysis</h1><div class="report-tabs" role="tablist" aria-label="Your experience data"></div><aside class="report-current" aria-label="Your choices"></aside><div id="report-summary" class="report-insight" role="tabpanel"></div></div><div class="report-picture"><img id="report-image" alt="The view you chose and cropped"><canvas id="report-canvas" role="img" aria-label="Your cropped particle world, gently floating at a fixed focus"></canvas><div class="report-eye-layer" aria-hidden="true"></div></div><p class="report-save-copy">Here is your vision analysis ticket. Save your result below, and return to explore another perspective at any time.</p><button id="save-report" class="start" type="button"><span class="start-line left"></span><span class="start-text">Save My Result</span><span class="start-line right"></span></button><button class="report-back" data-go="detail"><span aria-hidden="true">◂</span> Back</button>';
+ report.innerHTML='<header class="site-header"><button class="logo logo-small" data-go="home" aria-label="I SEE home"><span>I </span><span class="see">SEE</span></button><button class="about" data-about>ABOUT</button></header><img class="report-cross" src="assets/nov19/report-cross.svg" alt=""><div class="report-data"><h1>Data Analysis</h1><div class="report-tabs" aria-label="Your experience data"></div><section id="report-summary" class="final-report-copy" aria-label="Your final report"></section></div><section class="report-ticket" aria-label="Your perspective ticket"><div class="report-picture"><img id="report-image" alt="The view you chose and cropped"><canvas id="report-canvas" role="img" aria-label="Your cropped particle world, gently floating at a fixed focus"></canvas><div class="report-eye-layer" aria-hidden="true"></div><span class="ticket-question">I SEE = I UNDERSTAND?</span></div><dl class="ticket-meta" aria-label="Your selected settings"></dl><img id="ticket-save-image" alt="" aria-hidden="true"><button id="save-report" class="ticket-save" type="button">Here is your vision analysis ticket. Right-click the ticket to save.<br>Feel free to come back to the website at any time.</button></section><button class="report-back" data-go="detail"><span aria-hidden="true">◂</span> Back</button>';
  $('#stage').append(report);
  let reportEye;function mountReportEye(markup){reportEye=parseSvg(markup,'report-eye');reportEye.setAttribute('aria-hidden','true');
- reportEye.querySelector('rect[fill="#3256C8"]').setAttribute('fill','transparent');
- reportEye.querySelectorAll('circle').forEach(circle=>{const r=Number(circle.getAttribute('r'));if([85,69.5,51.5].includes(r)){const parent=circle.parentElement;const target=parent.hasAttribute('filter')?parent:circle;target.dataset.gazePupil='';target.dataset.baseTransform=target.getAttribute('transform')||'';}});
- $('.report-eye-layer').replaceChildren(reportEye);}
- mountReportEye(asset['report-eye']);fetch('assets/nov19/report-eye.svg').then(r=>{if(!r.ok)throw Error('Report eye');return r.text();}).then(mountReportEye).catch(console.error);
+ reportEye.querySelector('rect[fill="#3256C8"]')?.setAttribute('fill','transparent');
+ if(!reportEye.querySelector('[data-gaze-pupil]'))reportEye.querySelectorAll('circle').forEach(circle=>{const r=Number(circle.getAttribute('r'));if([85,69.5,51.5].includes(r)){const parent=circle.parentElement;const target=parent.hasAttribute('filter')?parent:circle;target.dataset.gazePupil='';target.dataset.baseTransform=target.getAttribute('transform')||'';}});
+ reportEye.querySelectorAll('[data-gaze-pupil]').forEach(n=>n.dataset.baseTransform=n.getAttribute('transform')||'');$('.report-eye-layer').replaceChildren(reportEye);}
+ mountReportEye(asset['report-eye']);const ticketEyeReady=fetch('assets/nov20-result/result-eye.svg').then(r=>{if(!r.ok)throw Error('Report eye');return r.text();}).then(mountReportEye).catch(console.error);
  const reportStudy=new ReportStudy(report);
  const reportField=new ParticleField($('#report-canvas'));reportField.lockZoom=true;reportField.freezePerception=false;reportField.ambient=true;reportField.canvas.style.pointerEvents='none';
  new ResizeObserver(()=>{const w=$('.report-picture').clientWidth;if(w) $('.report-picture').style.setProperty('--report-scale',w/450);}).observe($('.report-picture'));
+ new ResizeObserver(()=>{const width=$('.report-ticket').clientWidth;if(width)$('.report-ticket').style.setProperty('--flow-scale',width/487);}).observe($('.report-ticket'));
  const loader=document.createElement('div');loader.className='report-loader';loader.hidden=true;loader.setAttribute('role','status');loader.setAttribute('aria-label','Creating your experience report');loader.innerHTML='<div class="loader-center"><div class="loader-word logo" aria-hidden="true"><span>I </span><span class="see">SEE</span></div></div>';$('#result').append(loader);
  let loadingAnimations=[],loadingTimer=0,loadingResolve=null;
  function cancelLoading(){loadingAnimations.forEach(a=>a.cancel());loadingAnimations=[];clearTimeout(loadingTimer);loadingTimer=0;loader.hidden=true;$('#result').removeAttribute('aria-busy');$('.condition-explanation').inert=false;$('.result-window').inert=false;$('.result-navigation').inert=false;if(loadingResolve){loadingResolve(false);loadingResolve=null;}}
@@ -84,18 +80,20 @@
   const rect={...capture.rect},side=Math.min(rect.width,rect.height);rect.x+=(rect.width-side)/2;rect.y+=(rect.height-side)/2;rect.width=rect.height=side;
   const state={...capture.state,controls:{...capture.state.controls,motion:false},paused:false};
   reportField.restoreState(state,SeeFlow.cropLens(capture.bounds.width,capture.bounds.height,rect));reportField.setActive(true);
-  const distance=capture.state.focus>.66?'Closer':capture.state.focus<.33?'Further away':'Mid-range',tone=JourneyContent.toneLabel(capture.state.tone);
-  const current=$('.report-current');current.replaceChildren();
-  for(const [label,values]of[['Current conditions',capture.entries.map(c=>c.name+(c.detail?' · '+c.detail:''))],['View distance',[distance]],['Color tone',[tone]]]){const title=document.createElement('p');title.textContent=label;current.append(title);for(const value of values){const line=document.createElement('div');line.textContent=value;current.append(line);}}
-  reportStudy.show(capture);
+  const model=root.ReportStudyModel.build(capture),settings=$('.ticket-meta');settings.replaceChildren();
+  for(const [key,value]of[['Visual Condition',capture.entries.map(e=>e.name).join(' & ')],['View Distance',model.distance],['Color Tone',JourneyContent.toneLabel(capture.state.tone)],['Study Type','Visual Simulation']]){const cell=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=key;dd.textContent=value;cell.append(dt,dd);settings.append(cell);}
+  reportStudy.show(capture);$('.report-data').scrollTop=0;const token=++ticketRevision;$('#ticket-save-image').removeAttribute('src');
+  ticketEyeReady.then(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))).then(()=>renderTicket()).then(url=>{if(token===ticketRevision&&currentCapture)$('#ticket-save-image').src=url;}).catch(console.error);
  }
- $('#save-report').onclick=async()=>{
-  const button=$('#save-report');if(button.disabled||!currentCapture)return;button.disabled=true;
-  try{const output=document.createElement('canvas');output.width=output.height=1200;const ctx=output.getContext('2d');ctx.drawImage($('#report-canvas'),0,0,1200,1200);
-   const blob=new Blob([new XMLSerializer().serializeToString(reportEye)],{type:'image/svg+xml'}),url=URL.createObjectURL(blob),eye=new Image();try{eye.src=url;await eye.decode();ctx.drawImage(eye,0,0,1200,1200);}finally{URL.revokeObjectURL(url);}
-   const file=await new Promise(resolve=>output.toBlob(resolve,'image/png'));if(!file)throw Error('Could not save result');const link=document.createElement('a'),download=URL.createObjectURL(file);link.href=download;link.download='I-SEE-my-result.png';link.click();setTimeout(()=>URL.revokeObjectURL(download),1000);
-  }catch(error){console.error(error);button.setAttribute('aria-label','Save failed. Please try again.');}finally{button.disabled=false;}
- };
+ let ticketRevision=0;
+ async function renderTicket(){
+  const output=document.createElement('canvas');output.width=974;output.height=1304;const ctx=output.getContext('2d');ctx.scale(2,2);ctx.fillStyle='#939294';ctx.fillRect(0,0,487,652);ctx.save();ctx.beginPath();ctx.roundRect(18,16,450,450,25);ctx.clip();ctx.drawImage($('#report-canvas'),18,16,450,450);
+  const blob=new Blob([new XMLSerializer().serializeToString(reportEye)],{type:'image/svg+xml'}),url=URL.createObjectURL(blob),eye=new Image();try{eye.src=url;await eye.decode();ctx.drawImage(eye,18,16,450,450);}finally{URL.revokeObjectURL(url);}ctx.restore();await document.fonts.ready;ctx.textBaseline='top';ctx.fillStyle='#ffe96d';ctx.font='500 10px Manrope';ctx.fillText('I SEE = I UNDERSTAND?',338,446);
+  const wrap=(text,x,y,width,color,font,lineHeight)=>{ctx.fillStyle=color;ctx.font=font;let line='',lines=[];for(const word of text.split(/\s+/)){const next=line?line+' '+word:word;if(line&&ctx.measureText(next).width>width){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);for(const [i,text]of lines.entries())ctx.fillText(text,x,y+i*lineHeight);return lines.length*lineHeight;};
+  const cells=[...$('.ticket-meta').children];let rowHeight=0,nextY=534;for(let i=0;i<cells.length;i++){const x=i%2?283:41,y=i<2?479:nextY;wrap(cells[i].querySelector('dt').textContent,x,y,200,'#ffe96d','500 10px Manrope',14);const height=wrap(cells[i].querySelector('dd').textContent,x+2,y+14,i%2?164:200,'#fff','500 14px Manrope',18);if(i<2)rowHeight=Math.max(rowHeight,height);if(i===1)nextY=Math.max(534,479+14+rowHeight+23);}
+  wrap('Here is your vision analysis ticket. Right-click the ticket to save.',19,619,440,'#3256c8','500 10px Manrope',12);wrap('Feel free to come back to the website at any time.',19,631,440,'#3256c8','500 10px Manrope',12);return output.toDataURL('image/png');
+ }
+ $('#save-report').onclick=async()=>{const button=$('#save-report');if(button.disabled||!currentCapture)return;button.disabled=true;try{const url=await renderTicket();$('#ticket-save-image').src=url;const link=document.createElement('a');link.href=url;link.download='I-SEE-my-result.png';link.click();}catch(error){console.error(error);}finally{button.disabled=false;}};
  // Small independent gaze offsets keep the frames still while the pupils look around.
  let gazeRAF=0,marker={x:0,y:0,tx:0,ty:0},pupil={x:0,y:0,tx:0,ty:0};
  function gazeTick(){gazeRAF=0;let running=false;for(const p of[marker,pupil]){p.x+=(p.tx-p.x)*(reduce.matches?1:.16);p.y+=(p.ty-p.y)*(reduce.matches?1:.16);running||=Math.abs(p.tx-p.x)+Math.abs(p.ty-p.y)>.02;}
@@ -113,5 +111,5 @@
  addEventListener('pointermove',e=>{if(e.pointerType==='touch'||!fine.matches||document.querySelector('dialog[open]')){document.documentElement.classList.remove('has-custom-cursor');cursor.classList.remove('visible');return;}document.documentElement.classList.add('has-custom-cursor');cursor.classList.add('visible');tx=e.clientX;ty=e.clientY;if(!started){cx=tx;cy=ty;started=true;}if(!cursorRAF)cursorRAF=requestAnimationFrame(cursorTick);},{passive:true});
  addEventListener('pointerdown',()=>cursor.classList.add('pressed'));addEventListener('pointerup',()=>cursor.classList.remove('pressed'));document.documentElement.addEventListener('pointerleave',()=>cursor.classList.remove('visible'));addEventListener('blur',()=>cursor.classList.remove('visible'));
  addEventListener('pagehide',()=>{cancelAnimationFrame(cursorRAF);cancelAnimationFrame(gazeRAF);cancelLoading();});
- root.JourneyUI={setTheme,prepareReport,playLoading,cancelLoading,setReportActive(active){reportField.setActive(active);},resetReport(){reportField.setActive(false);reportField.reset();currentCapture=null;reportStudy.reset();$('#report-image').removeAttribute('src');$('#report-summary').replaceChildren();$('.report-current').replaceChildren();}};
+ root.JourneyUI={setTheme,prepareReport,playLoading,cancelLoading,setReportActive(active){reportField.setActive(active);reportStudy.setActive(active);},resetReport(){reportField.setActive(false);reportField.reset();currentCapture=null;ticketRevision++;$('#ticket-save-image').removeAttribute('src');reportStudy.reset();$('#report-image').removeAttribute('src');$('#report-summary').replaceChildren();$('.ticket-meta').replaceChildren();}};
 })(globalThis);

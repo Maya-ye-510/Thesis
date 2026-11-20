@@ -315,7 +315,7 @@
     drawDust(ctx) {
       const l=this.lens,w=l?l.sourceWidth:this.width,h=l?l.sourceHeight:this.height,scale=l?this.width*l.sizeRatio:1;
       const view=this.frozenSnow,time=view?view.time:(this.snowTime??this.time),camera=view?view.camera:this.camera,gaze=view?view.gaze:(this.snowGaze||{x:0,y:0});
-      const count=w<600?48:this.dust.length;
+      const count=Math.min(w<600?48:this.dust.length,this.dust.length);
       for(let i=0;i<count;i++){
         const p=this.dust[i],pos=floaterPosition(p,time,gaze,camera),x=(pos.x*w-(l?l.crop.x:0))*scale,y=(pos.y*h-(l?l.crop.y:0))*scale,box=p.radius*9*scale*(p.type>=3?1.65:1);
         ctx.globalAlpha=.68+(i%3)*.1;ctx.drawImage(this.floaterSprite(p.type),x-box/2,y-box/2,box,box);
